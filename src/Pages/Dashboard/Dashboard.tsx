@@ -54,11 +54,11 @@ const barChartData = [
 
 export function Dashboard() {
     return (
-        <div className="flex gap-6">
+        <div className="flex gap-6 animate-in fade-in-0 duration-700">
             {/* Left Column */}
             <div className="flex flex-1 flex-col gap-6">
                 {/* Solicitudes de hoy */}
-                <Card>
+                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Solicitudes de hoy</CardTitle>
@@ -66,7 +66,7 @@ export function Dashboard() {
                                 Resumen de Solicitudes
                             </p>
                         </div>
-                        <Button className="h-10 gap-2 rounded-lg bg-donamed-primary px-4">
+                        <Button className="h-10 gap-2 rounded-lg bg-donamed-primary px-4 transition hover:shadow-md">
                             <Download className="h-4 w-4" />
                             Exportar
                         </Button>
@@ -74,39 +74,47 @@ export function Dashboard() {
 
                     <CardContent>
                         <div className="flex gap-5">
-                            <StatsCard
+                            <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
+                                <StatsCard
                                 icon={DollarSign}
                                 value={5}
                                 label="Total de Donaciones"
                                 variant="light"
-                            />
-                            <StatsCard
+                                />
+                            </div>
+                            <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500 delay-100">
+                                <StatsCard
                                 icon={FileText}
                                 value={300}
                                 label="Solicitudes"
                                 subLabel="+5% from yesterday"
                                 variant="primary"
-                            />
-                            <StatsCard
+                                />
+                            </div>
+                            <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500 delay-200">
+                                <StatsCard
                                 icon={CheckCircle}
                                 value={5}
                                 label="Aprobaciones"
                                 subLabel="+1,2% from yesterday"
                                 variant="light"
-                            />
-                            <StatsCard
+                                />
+                            </div>
+                            <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500 delay-300">
+                                <StatsCard
                                 icon={UserPlus}
                                 value={8}
                                 label="Nuevos Registros"
                                 subLabel="0,5% from yesterday"
                                 variant="light"
-                            />
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Solicitudes Recientes */}
-                <Card>
+                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-100">
                     <CardHeader>
                         <CardTitle>Solicitudes Recientes</CardTitle>
                     </CardHeader>
@@ -116,7 +124,7 @@ export function Dashboard() {
                 </Card>
 
                 {/* Insights */}
-                <Card className="h-[348px]">
+                <Card className="h-[348px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-200">
                     <CardContent className="h-full p-6">
                         <AreaChart title="Insights" />
                     </CardContent>
@@ -126,7 +134,7 @@ export function Dashboard() {
             {/* Right Column */}
             <div className="flex w-[420px] flex-col gap-6">
                 {/* Solicitudes vs Medicamentos */}
-                <Card className="h-[349px]">
+                <Card className="h-[349px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-100">
                     <CardContent className="h-full p-6">
                         <BarChart
                             title="Solicitudes vs Medicamentos"
@@ -140,14 +148,14 @@ export function Dashboard() {
                 </Card>
 
                 {/* Solicitudes Entrantes */}
-                <Card className="h-[351px]">
+                <Card className="h-[351px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-200">
                     <CardContent className="h-full p-6">
                         <LineChart title="Solicitudes Entrantes" />
                     </CardContent>
                 </Card>
 
                 {/* Solicitudes por Mes */}
-                <Card className="h-[351px]">
+                <Card className="h-[351px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-300">
                     <CardContent className="h-full p-6">
                         <WeeklyChart title="Solicitudes por Mes" />
                     </CardContent>

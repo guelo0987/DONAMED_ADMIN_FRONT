@@ -5,6 +5,7 @@ const pageTitles: Record<string, string> = {
     "/": "Dashboard",
     "/dashboard": "Dashboard",
     "/solicitudes": "Dashboard",
+    "/donaciones": "",
     "/medicamentos": "Medicamentos",
     "/usuarios": "Usuarios",
     "/configuracion": "Configuración",
@@ -20,9 +21,15 @@ export function Header() {
             <h1 className="text-4xl font-semibold text-[#404040]">{title}</h1>
 
             {/* Search Bar */}
-            <div className="flex h-[60px] w-[460px] items-center justify-between rounded-2xl border border-[#E7E7E7] bg-[#F3F3F3] px-6">
-                <span className="text-lg text-[#5B5B5B]/50">Buscar</span>
-                <Search className="h-8 w-8 text-[#404040]" />
+            <div className="group flex h-[60px] w-[460px] items-center gap-3 rounded-2xl border border-[#E7E7E7] bg-white px-4 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-donamed-light text-donamed-dark transition group-focus-within:bg-donamed-primary group-focus-within:text-white">
+                    <Search className="h-5 w-5" />
+                </div>
+                <input
+                    type="text"
+                    placeholder="Buscar en el panel"
+                    className="flex-1 bg-transparent text-base text-[#404040] placeholder:text-[#5B5B5B]/50 focus:outline-none"
+                />
             </div>
 
             {/* User Menu */}

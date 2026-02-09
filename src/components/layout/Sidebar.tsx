@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
     LayoutDashboard,
     FileText,
+    HandHeart,
     Pill,
     Users,
     Settings,
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: FileText, label: "Solicitudes", path: "/solicitudes" },
+    { icon: HandHeart, label: "Donaciones", path: "/donaciones" },
     { icon: Pill, label: "Medicamentos", path: "/medicamentos" },
     { icon: Users, label: "Usuarios", path: "/usuarios" },
     { icon: Settings, label: "Configuración", path: "/configuracion" },
