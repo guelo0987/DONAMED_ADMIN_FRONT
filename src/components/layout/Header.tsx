@@ -6,6 +6,11 @@ const pageTitles: Record<string, string> = {
     "/dashboard": "Dashboard",
     "/solicitudes": "Dashboard",
     "/donaciones": "",
+    "/inventario": "",
+    "/inventario/almacen": "",
+    "/inventario/movimientos": "",
+    "/despachos": "Despachos",
+    "/despachos/historial": "Despachos",
     "/medicamentos": "Medicamentos",
     "/usuarios": "Usuarios",
     "/configuracion": "Configuración",
@@ -13,7 +18,15 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
     const location = useLocation();
-    const title = pageTitles[location.pathname] || "Dashboard";
+    const title =
+        pageTitles[location.pathname] ??
+        (location.pathname.startsWith("/inventario")
+            ? "Inventario"
+            : location.pathname.startsWith("/donaciones")
+              ? ""
+              : location.pathname.startsWith("/despachos")
+                ? "Despachos"
+                : "Dashboard");
 
     return (
         <header className="fixed left-[345px] right-0 top-0 z-30 flex h-[120px] items-center justify-between bg-white px-8">

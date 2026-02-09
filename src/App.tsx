@@ -9,6 +9,18 @@ import {
   ListaDonaciones,
   RegistroDonacion,
 } from "./Pages/Donaciones";
+import {
+  DetalleInventario,
+  InventarioAlmacen,
+  InventarioGeneral,
+  MovimientosInventario,
+} from "./Pages/Inventario";
+import {
+  CrearDespacho,
+  DetalleDespacho,
+  HistorialDespachos,
+  ListaDespachos,
+} from "./Pages/Despachos";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -48,6 +60,42 @@ const router = createBrowserRouter([
       {
         path: "donaciones/:id/editar",
         element: <EditarDonacion />,
+      },
+      {
+        path: "inventario",
+        element: <InventarioGeneral />,
+      },
+      {
+        path: "inventario/almacen",
+        element: <InventarioAlmacen />,
+      },
+      {
+        path: "inventario/medicamento/:id",
+        element: <DetalleInventario />,
+      },
+      {
+        path: "inventario/movimientos",
+        element: <MovimientosInventario />,
+      },
+      {
+        path: "despachos",
+        element: <ListaDespachos />,
+      },
+      {
+        path: "despachos/:id",
+        element: <CrearDespacho />,
+      },
+      {
+        path: "despachos/:id/detalle",
+        element: <DetalleDespacho />,
+      },
+      {
+        path: "despachos/historial",
+        element: <HistorialDespachos />,
+      },
+      {
+        path: "despachos/historial/:id",
+        element: <DetalleDespacho />,
       },
     ],
   },
