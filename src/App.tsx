@@ -21,6 +21,12 @@ import {
   HistorialDespachos,
   ListaDespachos,
 } from "./Pages/Despachos";
+import {
+  DetalleProveedor,
+  EditarProveedor,
+  ListaProveedores,
+  RegistrarProveedor,
+} from "./Pages/Proveedores";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -96,6 +102,22 @@ const router = createBrowserRouter([
       {
         path: "despachos/historial/:id",
         element: <DetalleDespacho />,
+      },
+      {
+        path: "proveedores",
+        element: <ListaProveedores />,
+      },
+      {
+        path: "proveedores/nuevo",
+        element: <RegistrarProveedor />,
+      },
+      {
+        path: "proveedores/:id",
+        element: <DetalleProveedor />,
+      },
+      {
+        path: "proveedores/:id/editar",
+        element: <EditarProveedor />,
       },
     ],
   },

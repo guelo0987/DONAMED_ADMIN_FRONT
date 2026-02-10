@@ -4,13 +4,14 @@ import { Search, ChevronDown } from "lucide-react";
 const pageTitles: Record<string, string> = {
     "/": "Dashboard",
     "/dashboard": "Dashboard",
-    "/solicitudes": "Dashboard",
+    "/solicitudes": "",
     "/donaciones": "",
     "/inventario": "",
     "/inventario/almacen": "",
     "/inventario/movimientos": "",
-    "/despachos": "Despachos",
-    "/despachos/historial": "Despachos",
+    "/despachos": "",
+    "/despachos/historial": "",
+    "/proveedores": "",
     "/medicamentos": "Medicamentos",
     "/usuarios": "Usuarios",
     "/configuracion": "Configuración",
@@ -26,6 +27,8 @@ export function Header() {
               ? ""
               : location.pathname.startsWith("/despachos")
                 ? "Despachos"
+                : location.pathname.startsWith("/proveedores")
+                  ? "Proveedores"
                 : "Dashboard");
 
     return (
