@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { medicamentoService } from "@/services/medicamentoService";
 import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
 import type { FormaFarmaceutica, ViaAdministracion, Categoria, Enfermedad } from "@/types/catalogo.types";
 
 export function EditarMedicamento() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const [nombre, setNombre] = useState("");
@@ -73,9 +75,12 @@ export function EditarMedicamento() {
                 enfermedades,
                 estado,
             });
+            addToast({ variant: "success", title: "Medicamento actualizado", message: `${nombre.trim()} fue actualizado correctamente.` });
             navigate(`/medicamentos/${id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al actualizar");
+            const msg = err instanceof Error ? err.message : "Error al actualizar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsSaving(false);
         }

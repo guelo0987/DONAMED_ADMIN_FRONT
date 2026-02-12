@@ -4,9 +4,11 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { proveedorService } from "@/services/proveedorService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Proveedor } from "@/types/proveedor.types";
 
 export function ListaProveedores() {
+    const { addToast } = useToast();
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -49,14 +51,18 @@ export function ListaProveedores() {
 
     const handleEliminar = async () => {
         if (!eliminarTarget) return;
+        const nombre = eliminarTarget.nombre;
         try {
             await proveedorService.deleteProveedor(eliminarTarget.rncproveedor);
             setProveedores((prev) =>
                 prev.filter((p) => p.rncproveedor !== eliminarTarget.rncproveedor)
             );
             setEliminarTarget(null);
+            addToast({ variant: "success", title: "Proveedor eliminado", message: `${nombre} fue eliminado correctamente.` });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al eliminar");
+            const msg = err instanceof Error ? err.message : "Error al eliminar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         }
     };
 

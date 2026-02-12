@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { donacionService } from "@/services/donacionService";
 import { proveedorService } from "@/services/proveedorService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Proveedor } from "@/types/proveedor.types";
 
 export function EditarDonacion() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const [proveedor, setProveedor] = useState("");
@@ -44,9 +46,12 @@ export function EditarDonacion() {
                 proveedor: proveedor.trim() || undefined,
                 descripcion: descripcion.trim() || undefined,
             });
+            addToast({ variant: "success", title: "Donación actualizada", message: "Los datos fueron actualizados correctamente." });
             navigate(`/donaciones/${id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al actualizar");
+            const msg = err instanceof Error ? err.message : "Error al actualizar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsSaving(false);
         }

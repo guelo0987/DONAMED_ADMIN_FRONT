@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { personaService } from "@/services/personaService";
 import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Provincia, Ciudad } from "@/types/persona.types";
 
 export function RegistrarPersona() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [cedula, setCedula] = useState("");
     const [nombre, setNombre] = useState("");
@@ -56,9 +58,12 @@ export function RegistrarPersona() {
                 direccion: direccion.trim() || undefined,
                 codigociudad: codigociudad.trim() || undefined,
             });
+            addToast({ variant: "success", title: "Persona registrada", message: `${nombre.trim()} ${apellidos.trim()} fue creada correctamente.` });
             navigate("/personas");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al crear persona");
+            const msg = err instanceof Error ? err.message : "Error al crear persona";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsLoading(false);
         }

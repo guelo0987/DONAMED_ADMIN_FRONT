@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usuarioService } from "@/services/usuarioService";
 import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Rol } from "@/types/persona.types";
 
 export function EditarUsuario() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const [roles, setRoles] = useState<Rol[]>([]);
@@ -58,9 +60,12 @@ export function EditarUsuario() {
                 payload.contrasena = nuevaContrasena;
             }
             await usuarioService.updateUsuario(num, payload);
+            addToast({ variant: "success", title: "Usuario actualizado", message: `${correo.trim()} fue actualizado correctamente.` });
             navigate(`/usuarios/${id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al actualizar");
+            const msg = err instanceof Error ? err.message : "Error al actualizar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsSaving(false);
         }

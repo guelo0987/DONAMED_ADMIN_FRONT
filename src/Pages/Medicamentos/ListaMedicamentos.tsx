@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { medicamentoService } from "@/services/medicamentoService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Medicamento } from "@/services/medicamentoService";
 
 type EstadoMedicamento = "ACTIVO" | "INACTIVO";
@@ -19,6 +20,7 @@ const estadoLabels: Record<EstadoMedicamento, string> = {
 };
 
 export function ListaMedicamentos() {
+    const { addToast } = useToast();
     const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -64,14 +66,18 @@ export function ListaMedicamentos() {
 
     const handleEliminar = async () => {
         if (!eliminarTarget) return;
+        const nombre = eliminarTarget.nombre;
         try {
             await medicamentoService.deleteMedicamento(eliminarTarget.codigomedicamento);
             setMedicamentos((prev) =>
                 prev.filter((m) => m.codigomedicamento !== eliminarTarget.codigomedicamento)
             );
             setEliminarTarget(null);
+            addToast({ variant: "success", title: "Medicamento eliminado", message: `${nombre} fue eliminado correctamente.` });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al eliminar");
+            const msg = err instanceof Error ? err.message : "Error al eliminar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         }
     };
 

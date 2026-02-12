@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usuarioService } from "@/services/usuarioService";
 import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Rol } from "@/types/persona.types";
 
 export function RegistrarUsuario() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [roles, setRoles] = useState<Rol[]>([]);
     const [correo, setCorreo] = useState("");
@@ -37,9 +39,12 @@ export function RegistrarUsuario() {
                 cedula_usuario: cedula_usuario.trim() || undefined,
                 codigo_rol: roles.length ? codigo_rol : undefined,
             });
+            addToast({ variant: "success", title: "Usuario registrado", message: `${correo.trim()} fue creado correctamente.` });
             navigate("/usuarios");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al crear usuario");
+            const msg = err instanceof Error ? err.message : "Error al crear usuario";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsLoading(false);
         }

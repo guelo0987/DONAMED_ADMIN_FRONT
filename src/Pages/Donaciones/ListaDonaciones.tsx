@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { donacionService } from "@/services/donacionService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Donacion } from "@/services/donacionService";
 
 function formatDate(dateStr: string): string {
@@ -17,6 +18,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function ListaDonaciones() {
+    const { addToast } = useToast();
     const [donaciones, setDonaciones] = useState<Donacion[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -54,14 +56,18 @@ export function ListaDonaciones() {
 
     const handleEliminar = async () => {
         if (!eliminarTarget) return;
+        const nombre = proveedorNombre(eliminarTarget);
         try {
             await donacionService.deleteDonacion(eliminarTarget.numerodonacion);
             setDonaciones((prev) =>
                 prev.filter((d) => d.numerodonacion !== eliminarTarget.numerodonacion)
             );
             setEliminarTarget(null);
+            addToast({ variant: "success", title: "Donación eliminada", message: `Donación #${eliminarTarget.numerodonacion} (${nombre}) fue eliminada correctamente.` });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al eliminar");
+            const msg = err instanceof Error ? err.message : "Error al eliminar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         }
     };
 

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { donacionService } from "@/services/donacionService";
+import { useToast } from "@/contexts/ToastContext";
 import { proveedorService } from "@/services/proveedorService";
 import { almacenService } from "@/services/almacenService";
 import { medicamentoService } from "@/services/medicamentoService";
@@ -28,6 +29,7 @@ interface MedicamentoItem {
 
 export function RegistroDonacion() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [proveedor, setProveedor] = useState("");
     const [descripcion, setDescripcion] = useState("");
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
@@ -134,9 +136,12 @@ export function RegistroDonacion() {
                 descripcion: descripcion.trim() || undefined,
                 medicamentos: medicamentosPayload,
             });
+            addToast({ variant: "success", title: "Donación registrada", message: `Donación con ${validItems.length} medicamento(s) fue creada correctamente.` });
             navigate("/donaciones");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al registrar donación");
+            const msg = err instanceof Error ? err.message : "Error al registrar donación";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsLoading(false);
         }

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usuarioService } from "@/services/usuarioService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Usuario, EstadoUsuario } from "@/types/usuario.types";
 
 const statusStyles: Record<EstadoUsuario, string> = {
@@ -31,6 +32,7 @@ function formatDateTime(dateStr: string | null): string {
 }
 
 export function ListaUsuarios() {
+    const { addToast } = useToast();
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -71,12 +73,16 @@ export function ListaUsuarios() {
 
     const handleEliminar = async () => {
         if (!eliminarTarget) return;
+        const correo = eliminarTarget.correo;
         try {
             await usuarioService.deleteUsuario(eliminarTarget.idusuario);
             setUsuarios((prev) => prev.filter((u) => u.idusuario !== eliminarTarget.idusuario));
             setEliminarTarget(null);
+            addToast({ variant: "success", title: "Usuario eliminado", message: `${correo} fue eliminado correctamente.` });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al eliminar");
+            const msg = err instanceof Error ? err.message : "Error al eliminar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         }
     };
 

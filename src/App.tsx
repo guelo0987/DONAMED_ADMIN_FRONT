@@ -46,6 +46,7 @@ import {
   ListaPersonas,
   RegistrarPersona,
 } from "./Pages/Personas";
+import { ToastContainer } from "./components/ui/ToastContainer";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -199,7 +200,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ToastContainer />
+    </>
+  );
 }
 
 export default App;

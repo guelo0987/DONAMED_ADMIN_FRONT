@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { personaService } from "@/services/personaService";
 import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Provincia, Ciudad } from "@/types/persona.types";
 
 export function EditarPersona() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const { cedula } = useParams();
     const [nombre, setNombre] = useState("");
@@ -81,9 +83,12 @@ export function EditarPersona() {
                 direccion: direccion.trim() || undefined,
                 codigociudad: codigociudad.trim() || undefined,
             });
+            addToast({ variant: "success", title: "Persona actualizada", message: `${nombre.trim()} ${apellidos.trim()} fue actualizada correctamente.` });
             navigate(`/personas/${encodeURIComponent(cedula)}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al actualizar");
+            const msg = err instanceof Error ? err.message : "Error al actualizar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsSaving(false);
         }

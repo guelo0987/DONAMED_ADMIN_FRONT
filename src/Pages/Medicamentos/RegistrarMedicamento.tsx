@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { medicamentoService } from "@/services/medicamentoService";
 import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
 import type { FormaFarmaceutica, ViaAdministracion, Categoria, Enfermedad } from "@/types/catalogo.types";
 
 export function RegistrarMedicamento() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [codigomedicamento, setCodigomedicamento] = useState("");
     const [nombre, setNombre] = useState("");
@@ -54,9 +56,12 @@ export function RegistrarMedicamento() {
                 categorias: categorias.length ? categorias : undefined,
                 enfermedades: enfermedades.length ? enfermedades : undefined,
             });
+            addToast({ variant: "success", title: "Medicamento registrado", message: `${nombre.trim()} fue creado correctamente.` });
             navigate("/medicamentos");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al crear medicamento");
+            const msg = err instanceof Error ? err.message : "Error al crear medicamento";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsLoading(false);
         }

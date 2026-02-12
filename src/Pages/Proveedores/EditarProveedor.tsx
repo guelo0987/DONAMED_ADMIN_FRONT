@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { proveedorService } from "@/services/proveedorService";
 import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Provincia, Ciudad } from "@/types/persona.types";
 
 export function EditarProveedor() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
     const [nombre, setNombre] = useState("");
@@ -71,9 +73,12 @@ export function EditarProveedor() {
                 codigociudad: codigociudad.trim() || undefined,
                 direccion: direccion.trim() || undefined,
             });
+            addToast({ variant: "success", title: "Proveedor actualizado", message: `${nombre.trim()} fue actualizado correctamente.` });
             navigate(`/proveedores/${id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al actualizar");
+            const msg = err instanceof Error ? err.message : "Error al actualizar";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsSaving(false);
         }

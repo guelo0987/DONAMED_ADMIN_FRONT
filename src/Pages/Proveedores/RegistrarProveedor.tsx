@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { proveedorService } from "@/services/proveedorService";
 import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
 import type { Provincia, Ciudad } from "@/types/persona.types";
 
 export function RegistrarProveedor() {
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [rncproveedor, setRncproveedor] = useState("");
     const [nombre, setNombre] = useState("");
@@ -50,9 +52,12 @@ export function RegistrarProveedor() {
                 codigociudad: codigociudad.trim() || undefined,
                 direccion: direccion.trim() || undefined,
             });
+            addToast({ variant: "success", title: "Proveedor registrado", message: `${nombre.trim()} fue creado correctamente.` });
             navigate("/proveedores");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al crear proveedor");
+            const msg = err instanceof Error ? err.message : "Error al crear proveedor";
+            setError(msg);
+            addToast({ variant: "error", title: "Error", message: msg });
         } finally {
             setIsLoading(false);
         }
