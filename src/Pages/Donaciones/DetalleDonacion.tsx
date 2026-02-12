@@ -1,96 +1,74 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, XCircle, Ban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { donacionService } from "@/services/donacionService";
+import type { Donacion } from "@/services/donacionService";
 
-type EstadoDonacion = "Registrada" | "Validada" | "Rechazada" | "Cancelada";
-
-interface DonacionDetalle {
-    id: string;
-    donante: string;
-    fechaDonacion: string;
-    estado: EstadoDonacion;
-    registradoPor: string;
-    fechaRegistro: string;
-    totalMedicamentos: number;
-    totalUnidades: number;
-    proximosVencer: number;
-    vencidos: number;
-    medicamentos: Array<{
-        id: string;
-        nombre: string;
-        forma: string;
-        via: string;
-        lote: string;
-        vencimiento: string;
-        cantidad: number;
-        observaciones: string;
-    }>;
+function formatDate(dateStr: string): string {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("es-EC", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
 }
-
-const detalleMock: DonacionDetalle = {
-    id: "D-24589",
-    donante: "Laboratorios Sanar",
-    fechaDonacion: "2025-09-24",
-    estado: "Registrada",
-    registradoPor: "Laura P.",
-    fechaRegistro: "2025-09-24 10:35",
-    totalMedicamentos: 12,
-    totalUnidades: 320,
-    proximosVencer: 3,
-    vencidos: 0,
-    medicamentos: [
-        {
-            id: "med-1",
-            nombre: "Paracetamol 500mg",
-            forma: "Tableta",
-            via: "Oral",
-            lote: "L-2389",
-            vencimiento: "2026-02-15",
-            cantidad: 120,
-            observaciones: "Caja en perfecto estado",
-        },
-        {
-            id: "med-2",
-            nombre: "Amoxicilina 500mg",
-            forma: "Cápsula",
-            via: "Oral",
-            lote: "A-5521",
-            vencimiento: "2025-12-05",
-            cantidad: 80,
-            observaciones: "Revisar empaque exterior",
-        },
-        {
-            id: "med-3",
-            nombre: "Salbutamol",
-            forma: "Inhalador",
-            via: "Inhalatoria",
-            lote: "S-7410",
-            vencimiento: "2025-11-10",
-            cantidad: 40,
-            observaciones: "Incluye boquillas",
-        },
-    ],
-};
-
-const statusStyles: Record<EstadoDonacion, string> = {
-    Registrada: "bg-donamed-light text-donamed-dark",
-    Validada: "bg-success-light text-success",
-    Rechazada: "bg-danger-light text-danger",
-    Cancelada: "bg-warning-light text-warning",
-};
 
 export function DetalleDonacion() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [showValidation, setShowValidation] = useState(false);
-    const donacion = useMemo(() => {
-        if (!id) {
-            return detalleMock;
+    const [donacion, setDonacion] = useState<Donacion | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!id) return;
+        const num = parseInt(id, 10);
+        if (isNaN(num)) {
+            setError("ID inválido");
+            setIsLoading(false);
+            return;
         }
-        return { ...detalleMock, id };
+        donacionService
+            .getDonacionById(num)
+            .then(setDonacion)
+            .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar"))
+            .finally(() => setIsLoading(false));
     }, [id]);
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                    <p className="text-sm text-[#5B5B5B]">Cargando donación...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !donacion) {
+        return (
+            <div className="space-y-6">
+                <button
+                    type="button"
+                    onClick={() => navigate("/donaciones")}
+                    className="inline-flex items-center text-sm font-medium text-[#5B5B5B] hover:text-[#1E1E1E]"
+                >
+                    ← Volver a donaciones
+                </button>
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Donación no encontrada"}
+                </div>
+            </div>
+        );
+    }
+
+    const proveedorNombre =
+        donacion.proveedor_donaciones_proveedorToproveedor?.nombre ?? donacion.proveedor ?? "—";
+    const totalUnidades =
+        donacion.donacion_medicamento?.reduce((sum, m) => sum + m.cantidad, 0) ?? 0;
 
     return (
         <div className="space-y-6">
@@ -107,24 +85,17 @@ export function DetalleDonacion() {
                         Detalle de Donación
                     </h1>
                     <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                        Información completa y trazabilidad de la donación registrada.
+                        Información y medicamentos donados.
                     </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setShowValidation(true)}
-                        className="flex h-10 items-center justify-center rounded-xl border-2 border-[#33C5D8] bg-[#F3F3F3] px-5 text-sm font-semibold text-[#33C5D8] transition hover:bg-[#EDEDED]"
-                    >
-                        Validar
-                    </button>
-                    <Button
-                        asChild
-                        className="h-10 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
-                    >
-                        <Link to={`/donaciones/${donacion.id}/editar`}>Editar Donación</Link>
-                    </Button>
-                </div>
+                <Button
+                    asChild
+                    className="h-10 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
+                >
+                    <Link to={`/donaciones/${donacion.numerodonacion}/editar`}>
+                        Editar donación
+                    </Link>
+                </Button>
             </div>
 
             <Card className="overflow-hidden border-[#EEF1F4]">
@@ -132,112 +103,49 @@ export function DetalleDonacion() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Código de donación
+                                Número de donación
                             </p>
                             <p className="mt-1 text-lg font-semibold text-[#1E1E1E]">
-                                {donacion.id}
+                                #{donacion.numerodonacion}
                             </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <span
-                                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[donacion.estado]}`}
-                            >
-                                {donacion.estado}
-                            </span>
                         </div>
                     </div>
 
                     <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Donante / Proveedor
+                                Proveedor / Donante
                             </span>
-                            <span className="text-[#2D3748]">{donacion.donante}</span>
+                            <span className="text-[#2D3748]">{proveedorNombre}</span>
                         </div>
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Fecha de donación
+                                Fecha recibida
                             </span>
-                            <span className="text-[#2D3748]">{donacion.fechaDonacion}</span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Usuario que registró
+                            <span className="text-[#2D3748]">
+                                {formatDate(donacion.fecha_recibida)}
                             </span>
-                            <span className="text-[#2D3748]">{donacion.registradoPor}</span>
                         </div>
-                        <div className="flex flex-col gap-1 text-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Fecha de registro
-                            </span>
-                            <span className="text-[#2D3748]">{donacion.fechaRegistro}</span>
-                        </div>
+                        {donacion.descripcion && (
+                            <div className="flex flex-col gap-1 text-sm md:col-span-2">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Descripción
+                                </span>
+                                <span className="text-[#2D3748]">{donacion.descripcion}</span>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
 
-            {showValidation && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-[0px_30px_80px_-40px_rgba(0,0,0,0.6)]">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Validar donación
-                                </p>
-                                <h3 className="mt-1 text-xl font-semibold text-[#1E1E1E]">
-                                    {donacion.id} · {donacion.donante}
-                                </h3>
-                                <p className="mt-2 text-sm text-[#5B5B5B]/80">
-                                    Selecciona una acción para actualizar el estado de la donación.
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowValidation(false)}
-                                className="rounded-lg border border-[#E7E7E7] px-3 py-1 text-sm text-[#5B5B5B] hover:bg-[#F7F7F7]"
-                            >
-                                Cerrar
-                            </button>
-                        </div>
-
-                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                            <Button
-                                type="button"
-                                className="h-11 gap-2 rounded-xl bg-success text-white hover:bg-success/90"
-                                onClick={() => setShowValidation(false)}
-                            >
-                                <CheckCircle2 className="h-4 w-4" />
-                                Aceptar
-                            </Button>
-                            <Button
-                                type="button"
-                                className="h-11 gap-2 rounded-xl bg-danger text-white hover:bg-danger/90"
-                                onClick={() => setShowValidation(false)}
-                            >
-                                <XCircle className="h-4 w-4" />
-                                Rechazar
-                            </Button>
-                            <Button
-                                type="button"
-                                className="h-11 gap-2 rounded-xl bg-warning text-white hover:bg-warning/90"
-                                onClick={() => setShowValidation(false)}
-                            >
-                                <Ban className="h-4 w-4" />
-                                Cancelar
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2">
                 <Card className="border-[#EEF1F4]">
                     <CardContent className="p-5">
                         <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            Total de medicamentos
+                            Total de ítems
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-[#1E1E1E]">
-                            {donacion.totalMedicamentos}
+                            {donacion.donacion_medicamento?.length ?? 0}
                         </p>
                     </CardContent>
                 </Card>
@@ -247,27 +155,7 @@ export function DetalleDonacion() {
                             Total de unidades
                         </p>
                         <p className="mt-2 text-2xl font-semibold text-[#1E1E1E]">
-                            {donacion.totalUnidades}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="border-[#EEF1F4]">
-                    <CardContent className="p-5">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            Próximos a vencer
-                        </p>
-                        <p className="mt-2 text-2xl font-semibold text-warning">
-                            {donacion.proximosVencer}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="border-[#EEF1F4]">
-                    <CardContent className="p-5">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            Vencidos
-                        </p>
-                        <p className="mt-2 text-2xl font-semibold text-danger">
-                            {donacion.vencidos}
+                            {totalUnidades}
                         </p>
                     </CardContent>
                 </Card>
@@ -280,35 +168,38 @@ export function DetalleDonacion() {
                             Medicamentos donados
                         </h2>
                         <p className="text-sm text-[#5B5B5B]/70">
-                            Detalle de medicamentos incluidos en la donación.
+                            Detalle de medicamentos por almacén.
                         </p>
                     </div>
 
                     <div className="w-full">
-                        <div className="grid grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr_1.4fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            <span>Medicamento</span>
-                            <span>Forma</span>
-                            <span>Vía</span>
+                        <div className="grid grid-cols-[1.3fr_0.9fr_0.9fr_0.7fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                            <span>Medicamento / Lote</span>
+                            <span>Almacén</span>
                             <span>Lote</span>
-                            <span>Vencimiento</span>
                             <span>Cantidad</span>
-                            <span>Observaciones</span>
                         </div>
 
-                        {donacion.medicamentos.map((med) => (
+                        {donacion.donacion_medicamento?.map((med, idx) => (
                             <div
-                                key={med.id}
-                                className="grid grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr_1.4fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
+                                key={`${med.idalmacen}-${med.codigolote}-${idx}`}
+                                className="grid grid-cols-[1.3fr_0.9fr_0.9fr_0.7fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
                             >
-                                <span className="font-medium">{med.nombre}</span>
-                                <span>{med.forma}</span>
-                                <span>{med.via}</span>
-                                <span>{med.lote}</span>
-                                <span>{med.vencimiento}</span>
+                                <span className="font-medium">
+                                    {med.lote?.medicamento?.nombre ?? med.codigolote}
+                                </span>
+                                <span>{med.almacen?.nombre ?? med.idalmacen}</span>
+                                <span>{med.codigolote}</span>
                                 <span>{med.cantidad}</span>
-                                <span className="text-[#5B5B5B]">{med.observaciones}</span>
                             </div>
                         ))}
+
+                        {(!donacion.donacion_medicamento ||
+                            donacion.donacion_medicamento.length === 0) && (
+                            <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
+                                No hay medicamentos en esta donación
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

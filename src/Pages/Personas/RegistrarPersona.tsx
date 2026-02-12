@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { personaService } from "@/services/personaService";
+import { ubicacionService } from "@/services/ubicacionService";
+import type { Provincia, Ciudad } from "@/types/persona.types";
 
 export function RegistrarPersona() {
     const navigate = useNavigate();
@@ -14,9 +16,29 @@ export function RegistrarPersona() {
     const [telefono, setTelefono] = useState("");
     const [telefono_alternativo, setTelefono_alternativo] = useState("");
     const [direccion, setDireccion] = useState("");
+    const [codigoprovincia, setCodigoprovincia] = useState("");
     const [codigociudad, setCodigociudad] = useState("");
+    const [provincias, setProvincias] = useState<Provincia[]>([]);
+    const [ciudades, setCiudades] = useState<Ciudad[]>([]);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        ubicacionService.getProvincias().then(setProvincias).catch(() => setProvincias([]));
+    }, []);
+
+    useEffect(() => {
+        if (!codigoprovincia) {
+            setCiudades([]);
+            setCodigociudad("");
+            return;
+        }
+        ubicacionService
+            .getCiudades(codigoprovincia)
+            .then(setCiudades)
+            .catch(() => setCiudades([]));
+        setCodigociudad("");
+    }, [codigoprovincia]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -173,15 +195,38 @@ export function RegistrarPersona() {
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Código ciudad
+                                    Provincia
                                 </label>
-                                <input
-                                    type="text"
+                                <select
+                                    value={codigoprovincia}
+                                    onChange={(e) => setCodigoprovincia(e.target.value)}
+                                    className="h-10 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                >
+                                    <option value="">Seleccionar provincia</option>
+                                    {provincias.map((p) => (
+                                        <option key={p.codigoprovincia} value={p.codigoprovincia}>
+                                            {p.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-2 text-sm">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Ciudad
+                                </label>
+                                <select
                                     value={codigociudad}
                                     onChange={(e) => setCodigociudad(e.target.value)}
-                                    placeholder="Ej: P1"
-                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
+                                    disabled={!codigoprovincia}
+                                    className="h-10 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light disabled:bg-gray-50 disabled:text-gray-400"
+                                >
+                                    <option value="">Seleccionar ciudad</option>
+                                    {ciudades.map((c) => (
+                                        <option key={c.codigociudad} value={c.codigociudad}>
+                                            {c.nombre}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </CardContent>
