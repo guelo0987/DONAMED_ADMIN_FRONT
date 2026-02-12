@@ -1,96 +1,128 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const detalleMock = {
-    id: "PR-1001",
-    nombre: "Laboratorios Sanar",
-    contacto: "Laura Perez",
-    telefono: "+57 300 555 1122",
-    correo: "contacto@sanar.com",
-    ciudad: "Bogota",
-    direccion: "Calle 72 #10-45",
-};
+import { proveedorService } from "@/services/proveedorService";
 
 export function EditarProveedor() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const detalle = useMemo(() => {
-        if (!id) return detalleMock;
-        return { ...detalleMock, id };
+    const [nombre, setNombre] = useState("");
+    const [telefono, setTelefono] = useState("");
+    const [correo, setCorreo] = useState("");
+    const [codigociudad, setCodigociudad] = useState("");
+    const [direccion, setDireccion] = useState("");
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (!id) return;
+        const rnc = decodeURIComponent(id);
+        proveedorService
+            .getProveedorById(rnc)
+            .then((p) => {
+                setNombre(p.nombre);
+                setTelefono(p.telefono || "");
+                setCorreo(p.correo || "");
+                setCodigociudad(p.codigociudad || "");
+                setDireccion(p.direccion || "");
+            })
+            .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar"))
+            .finally(() => setIsLoading(false));
     }, [id]);
 
-    const [nombre, setNombre] = useState(detalle.nombre);
-    const [contacto, setContacto] = useState(detalle.contacto);
-    const [telefono, setTelefono] = useState(detalle.telefono);
-    const [correo, setCorreo] = useState(detalle.correo);
-    const [ciudad, setCiudad] = useState(detalle.ciudad);
-    const [direccion, setDireccion] = useState(detalle.direccion);
-
-    const handleSubmit = (event: React.FormEvent) => {
-        event.preventDefault();
-        // TODO: Implement save logic
-        navigate(`/proveedores/${detalle.id}`);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id) return;
+        setError("");
+        setIsSaving(true);
+        try {
+            await proveedorService.updateProveedor(decodeURIComponent(id), {
+                nombre: nombre.trim(),
+                telefono: telefono.trim() || undefined,
+                correo: correo.trim() || undefined,
+                codigociudad: codigociudad.trim() || undefined,
+                direccion: direccion.trim() || undefined,
+            });
+            navigate(`/proveedores/${id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al actualizar");
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    if (isLoading && !nombre) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                    <p className="text-sm text-[#5B5B5B]">Cargando...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div>
                 <button
                     type="button"
-                    onClick={() => navigate(`/proveedores/${detalle.id}`)}
+                    onClick={() => navigate(`/proveedores/${id}`)}
                     className="mb-2 inline-flex items-center text-sm font-medium text-[#5B5B5B] hover:text-[#1E1E1E]"
                 >
                     ← Volver al proveedor
                 </button>
-                <h1 className="text-3xl font-semibold text-[#1E1E1E]">Editar proveedor</h1>
+                <h1 className="text-3xl font-semibold text-[#1E1E1E]">
+                    Editar proveedor
+                </h1>
                 <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                    Actualiza la informacion del proveedor.
+                    Actualiza la información. El RNC no se puede modificar.
                 </p>
             </div>
+
+            {error && (
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <Card className="overflow-hidden border-[#EEF1F4]">
                     <CardContent className="p-6">
+                        <div className="mb-4 rounded-lg border border-[#E7E7E7] bg-[#FBFBFC] px-4 py-3 text-sm text-[#5B5B5B]">
+                            RNC: <span className="font-semibold text-[#2D3748]">{id}</span> (no
+                            editable)
+                        </div>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Nombre
-                                </span>
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Nombre *
+                                </label>
                                 <input
                                     type="text"
                                     value={nombre}
                                     onChange={(e) => setNombre(e.target.value)}
+                                    required
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Contacto
-                                </span>
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Teléfono
+                                </label>
                                 <input
-                                    type="text"
-                                    value={contacto}
-                                    onChange={(e) => setContacto(e.target.value)}
-                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Telefono
-                                </span>
-                                <input
-                                    type="text"
+                                    type="tel"
                                     value={telefono}
                                     onChange={(e) => setTelefono(e.target.value)}
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                     Correo
-                                </span>
+                                </label>
                                 <input
                                     type="email"
                                     value={correo}
@@ -99,20 +131,20 @@ export function EditarProveedor() {
                                 />
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Ciudad
-                                </span>
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Código ciudad
+                                </label>
                                 <input
                                     type="text"
-                                    value={ciudad}
-                                    onChange={(e) => setCiudad(e.target.value)}
+                                    value={codigociudad}
+                                    onChange={(e) => setCodigociudad(e.target.value)}
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
                             <div className="flex flex-col gap-2 text-sm md:col-span-2">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Direccion
-                                </span>
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Dirección
+                                </label>
                                 <input
                                     type="text"
                                     value={direccion}
@@ -129,12 +161,16 @@ export function EditarProveedor() {
                         type="button"
                         variant="outline"
                         className="h-11 rounded-xl"
-                        onClick={() => navigate(`/proveedores/${detalle.id}`)}
+                        onClick={() => navigate(`/proveedores/${id}`)}
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" className="h-11 rounded-xl">
-                        Guardar cambios
+                    <Button
+                        type="submit"
+                        disabled={isSaving}
+                        className="h-11 rounded-xl bg-donamed-primary hover:bg-donamed-dark disabled:opacity-70"
+                    >
+                        {isSaving ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
             </form>

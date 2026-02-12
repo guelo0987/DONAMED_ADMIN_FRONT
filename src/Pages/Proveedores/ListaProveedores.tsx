@@ -1,74 +1,64 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Search, Eye, Plus, PencilLine, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-type EstadoProveedor = "Activo" | "Inactivo";
-
-interface Proveedor {
-    id: string;
-    nombre: string;
-    contacto: string;
-    telefono: string;
-    correo: string;
-    estado: EstadoProveedor;
-}
-
-const proveedoresData: Proveedor[] = [
-    {
-        id: "PR-1001",
-        nombre: "Laboratorios Sanar",
-        contacto: "Laura Perez",
-        telefono: "+57 300 555 1122",
-        correo: "contacto@sanar.com",
-        estado: "Activo",
-    },
-    {
-        id: "PR-1002",
-        nombre: "FarmaPlus",
-        contacto: "Carlos Mendez",
-        telefono: "+57 310 444 8899",
-        correo: "info@farmaplus.com",
-        estado: "Activo",
-    },
-    {
-        id: "PR-1003",
-        nombre: "Clinica Horizonte",
-        contacto: "Diana Ruiz",
-        telefono: "+57 312 555 2233",
-        correo: "gestion@horizonte.com",
-        estado: "Inactivo",
-    },
-];
-
-const estadoStyles: Record<EstadoProveedor, string> = {
-    Activo: "bg-success-light text-success",
-    Inactivo: "bg-warning-light text-warning",
-};
+import { proveedorService } from "@/services/proveedorService";
+import type { Proveedor } from "@/types/proveedor.types";
 
 export function ListaProveedores() {
-    const [proveedores, setProveedores] = useState(proveedoresData);
-    const [search, setSearch] = useState("");
+    const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
     const [eliminarTarget, setEliminarTarget] = useState<Proveedor | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+    });
 
-    const handleEliminar = () => {
-        if (!eliminarTarget) return;
-        setProveedores((prev) => prev.filter((p) => p.id !== eliminarTarget.id));
-        setEliminarTarget(null);
+    const fetchProveedores = useCallback(async (page = 1) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const result = await proveedorService.getProveedores({
+                page,
+                limit: 20,
+                search: searchQuery || undefined,
+            });
+            setProveedores(result.data);
+            setPagination(result.pagination);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al cargar proveedores");
+            setProveedores([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [searchQuery]);
+
+    useEffect(() => {
+        fetchProveedores(1);
+    }, [fetchProveedores]);
+
+    const handleSearch = () => {
+        setSearchQuery(searchTerm);
     };
 
-    const filtered = useMemo(() => {
-        return proveedores.filter((item) => {
-            if (search.trim() === "") return true;
-            const value = search.toLowerCase();
-            return (
-                item.nombre.toLowerCase().includes(value) ||
-                item.contacto.toLowerCase().includes(value) ||
-                item.correo.toLowerCase().includes(value)
+    const handleEliminar = async () => {
+        if (!eliminarTarget) return;
+        try {
+            await proveedorService.deleteProveedor(eliminarTarget.rncproveedor);
+            setProveedores((prev) =>
+                prev.filter((p) => p.rncproveedor !== eliminarTarget.rncproveedor)
             );
-        });
-    }, [proveedores, search]);
+            setEliminarTarget(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al eliminar");
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -76,85 +66,128 @@ export function ListaProveedores() {
                 <div>
                     <h1 className="text-3xl font-semibold text-[#1E1E1E]">Proveedores</h1>
                     <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                        Gestion de proveedores y estado operativo.
+                        Gestión de proveedores y donaciones.
                     </p>
                 </div>
                 <Button
                     asChild
-                    className="h-10 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
+                    className="h-10 gap-2 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
                 >
-                    <Link to="/proveedores/nuevo">Registrar proveedor</Link>
+                    <Link to="/proveedores/nuevo">
+                        <Plus className="h-4 w-4" />
+                        Registrar proveedor
+                    </Link>
                 </Button>
             </div>
 
+            {error && (
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error}
+                </div>
+            )}
+
             <Card className="overflow-hidden border-[#EEF1F4]">
                 <CardContent className="p-0">
-                    <div className="border-b border-[#EEF1F4] bg-[#FBFBFC] px-6 py-5">
-                        <input
-                            type="text"
-                            placeholder="Buscar proveedor"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="h-10 w-full rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                        />
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EEF1F4] bg-[#FBFBFC] px-6 py-5">
+                        <div className="flex items-center gap-3 text-sm text-[#5B5B5B]/80">
+                            <span className="rounded-full bg-donamed-light px-3 py-1 text-xs font-semibold text-donamed-dark">
+                                {pagination.total} resultados
+                            </span>
+                            <span>Proveedores registrados</span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="group flex h-11 w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-donamed-light text-donamed-dark transition group-focus-within:bg-donamed-primary group-focus-within:text-white">
+                                    <Search className="h-4 w-4" />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por nombre o RNC"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                                    className="flex-1 bg-transparent text-sm text-[#404040] placeholder:text-[#5B5B5B]/50 focus:outline-none"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                onClick={handleSearch}
+                                className="h-11 rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark"
+                            >
+                                Buscar
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="w-full">
-                        <div className="grid grid-cols-[1.4fr_1fr_1fr_1.2fr_0.9fr_1fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            <span>Proveedor</span>
-                            <span>Contacto</span>
-                            <span>Telefono</span>
+                        <div className="grid grid-cols-[1fr_1.5fr_1fr_1.2fr_1fr_0.9fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                            <span>RNC</span>
+                            <span>Nombre</span>
+                            <span>Teléfono</span>
                             <span>Correo</span>
-                            <span>Estado</span>
+                            <span>Ciudad</span>
                             <span>Acciones</span>
                         </div>
 
-                        {filtered.map((item) => (
-                            <div
-                                key={item.id}
-                                className="grid grid-cols-[1.4fr_1fr_1fr_1.2fr_0.9fr_1fr] items-center gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
-                            >
-                                <div className="flex flex-col">
-                                    <span className="font-medium">{item.nombre}</span>
-                                    <span className="text-xs text-[#5B5B5B]/70">{item.id}</span>
-                                </div>
-                                <span>{item.contacto}</span>
-                                <span>{item.telefono}</span>
-                                <span>{item.correo}</span>
-                                <span
-                                    className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${estadoStyles[item.estado]}`}
-                                >
-                                    {item.estado}
-                                </span>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Link
-                                        to={`/proveedores/${item.id}`}
-                                        className="inline-flex h-9 items-center justify-center rounded-xl bg-donamed-primary px-4 text-xs font-semibold text-white transition hover:bg-donamed-dark"
-                                    >
-                                        Ver detalle
-                                    </Link>
-                                    <Link
-                                        to={`/proveedores/${item.id}/editar`}
-                                        className="inline-flex h-9 items-center justify-center rounded-xl border-2 border-donamed-primary bg-white px-4 text-xs font-semibold text-donamed-primary transition hover:bg-[#F7F7F7]"
-                                    >
-                                        Editar
-                                    </Link>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEliminarTarget(item)}
-                                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
-                                </div>
+                        {isLoading ? (
+                            <div className="py-16 text-center">
+                                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                                <p className="mt-3 text-sm text-[#5B5B5B]">
+                                    Cargando proveedores...
+                                </p>
                             </div>
-                        ))}
+                        ) : (
+                            <>
+                                {proveedores.map((proveedor) => (
+                                    <div
+                                        key={proveedor.rncproveedor}
+                                        className="grid grid-cols-[1fr_1.5fr_1fr_1.2fr_1fr_0.9fr] items-center gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
+                                    >
+                                        <span className="font-medium">
+                                            {proveedor.rncproveedor}
+                                        </span>
+                                        <span>{proveedor.nombre}</span>
+                                        <span>{proveedor.telefono ?? "—"}</span>
+                                        <span>{proveedor.correo ?? "—"}</span>
+                                        <span>
+                                            {proveedor.ciudad?.nombre ??
+                                                proveedor.codigociudad ??
+                                                "—"}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                to={`/proveedores/${encodeURIComponent(proveedor.rncproveedor)}`}
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                title="Ver detalle"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
+                                            <Link
+                                                to={`/proveedores/${encodeURIComponent(proveedor.rncproveedor)}/editar`}
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                title="Editar"
+                                            >
+                                                <PencilLine className="h-4 w-4" />
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEliminarTarget(proveedor)}
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
 
-                        {filtered.length === 0 && (
-                            <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
-                                No se encontraron proveedores
-                            </div>
+                                {proveedores.length === 0 && (
+                                    <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
+                                        No se encontraron proveedores
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </CardContent>
@@ -172,7 +205,8 @@ export function ListaProveedores() {
                                     {eliminarTarget.nombre}
                                 </h3>
                                 <p className="mt-2 text-sm text-[#5B5B5B]/80">
-                                    ¿Estás seguro? Esta acción no se puede deshacer.
+                                    ¿Estás seguro? No se puede eliminar si tiene donaciones
+                                    asociadas.
                                 </p>
                             </div>
                             <button

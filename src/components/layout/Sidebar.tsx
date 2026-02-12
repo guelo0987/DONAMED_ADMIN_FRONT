@@ -9,7 +9,6 @@ import {
     Briefcase,
     Users,
     UserCircle,
-    Settings,
     LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,7 @@ const menuItems = [
     { icon: Pill, label: "Medicamentos", path: "/medicamentos" },
     { icon: Users, label: "Usuarios", path: "/usuarios" },
     { icon: UserCircle, label: "Personas", path: "/personas" },
-    { icon: Settings, label: "Configuración", path: "/configuracion" },
+    
 ];
 
 export function Sidebar() {
