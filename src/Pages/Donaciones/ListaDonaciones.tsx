@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, Eye, PencilLine, CheckCircle2, XCircle, Ban, Plus } from "lucide-react";
+import { Search, Eye, PencilLine, CheckCircle2, XCircle, Ban, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,13 @@ export function ListaDonaciones() {
     const [donor, setDonor] = useState("");
     const [status, setStatus] = useState<EstadoDonacion | "all">("all");
     const [validationTarget, setValidationTarget] = useState<Donacion | null>(null);
+    const [eliminarTarget, setEliminarTarget] = useState<Donacion | null>(null);
+
+    const handleEliminar = () => {
+        if (!eliminarTarget) return;
+        setDonaciones((prev) => prev.filter((d) => d.id !== eliminarTarget.id));
+        setEliminarTarget(null);
+    };
 
     const filteredDonaciones = useMemo(() => {
         return donaciones.filter((donacion) => {
@@ -235,6 +242,14 @@ export function ListaDonaciones() {
                                     >
                                         Validar
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEliminarTarget(donacion)}
+                                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -295,6 +310,49 @@ export function ListaDonaciones() {
                             >
                                 <Ban className="h-4 w-4" />
                                 Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {eliminarTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-[0px_30px_80px_-40px_rgba(0,0,0,0.6)]">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Eliminar donación
+                                </p>
+                                <h3 className="mt-1 text-xl font-semibold text-[#1E1E1E]">
+                                    {eliminarTarget.id} · {eliminarTarget.donante}
+                                </h3>
+                                <p className="mt-2 text-sm text-[#5B5B5B]/80">
+                                    ¿Estás seguro? Esta acción no se puede deshacer.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setEliminarTarget(null)}
+                                className="rounded-lg border border-[#E7E7E7] px-3 py-1 text-sm text-[#5B5B5B] hover:bg-[#F7F7F7]"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11 rounded-xl"
+                                onClick={() => setEliminarTarget(null)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                className="h-11 rounded-xl bg-danger text-white hover:bg-danger/90"
+                                onClick={handleEliminar}
+                            >
+                                Eliminar
                             </Button>
                         </div>
                     </div>

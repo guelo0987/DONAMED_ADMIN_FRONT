@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AdminLayout } from "./components/layout";
 import { Dashboard } from "./Pages/Dashboard";
 import { AdminLogin } from "./Pages/Auth";
-import { ListaSolicitudes } from "./Pages/Solicitudes";
+import { DetalleSolicitud, ListaSolicitudes } from "./Pages/Solicitudes";
 import {
   DetalleDonacion,
   EditarDonacion,
@@ -27,6 +27,18 @@ import {
   ListaProveedores,
   RegistrarProveedor,
 } from "./Pages/Proveedores";
+import {
+  DetalleMedicamento,
+  EditarMedicamento,
+  ListaMedicamentos,
+  RegistrarMedicamento,
+} from "./Pages/Medicamentos";
+import {
+  DetalleUsuario,
+  EditarUsuario,
+  ListaUsuarios,
+  RegistrarUsuario,
+} from "./Pages/Usuarios";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -50,6 +62,10 @@ const router = createBrowserRouter([
       {
         path: "solicitudes",
         element: <ListaSolicitudes />,
+      },
+      {
+        path: "solicitudes/:id",
+        element: <DetalleSolicitud />,
       },
       {
         path: "donaciones",
@@ -118,6 +134,38 @@ const router = createBrowserRouter([
       {
         path: "proveedores/:id/editar",
         element: <EditarProveedor />,
+      },
+      {
+        path: "medicamentos",
+        element: <ListaMedicamentos />,
+      },
+      {
+        path: "medicamentos/nuevo",
+        element: <RegistrarMedicamento />,
+      },
+      {
+        path: "medicamentos/:id",
+        element: <DetalleMedicamento />,
+      },
+      {
+        path: "medicamentos/:id/editar",
+        element: <EditarMedicamento />,
+      },
+      {
+        path: "usuarios",
+        element: <ListaUsuarios />,
+      },
+      {
+        path: "usuarios/nuevo",
+        element: <RegistrarUsuario />,
+      },
+      {
+        path: "usuarios/:id",
+        element: <DetalleUsuario />,
+      },
+      {
+        path: "usuarios/:id/editar",
+        element: <EditarUsuario />,
       },
     ],
   },
