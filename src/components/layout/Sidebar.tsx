@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     FileText,
@@ -12,6 +12,7 @@ import {
     LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -26,6 +27,14 @@ const menuItems = [
 ];
 
 export function Sidebar() {
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        navigate("/login", { replace: true });
+    };
+
     return (
         <aside className="fixed left-0 top-0 z-40 h-screen w-[345px] bg-white">
             {/* Logo */}
@@ -69,7 +78,11 @@ export function Sidebar() {
                 ))}
 
                 {/* Cerrar Sesión */}
-                <button className="mt-8 flex items-center gap-4 rounded-2xl px-6 py-4 text-lg font-medium text-[#404040] transition-all hover:bg-gray-100">
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-8 flex w-full items-center gap-4 rounded-2xl px-6 py-4 text-lg font-medium text-[#404040] transition-all hover:bg-gray-100"
+                >
                     <LogOut className="h-8 w-8 rotate-180" />
                     <span>Cerrar Sesión</span>
                 </button>

@@ -1,20 +1,40 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AdminLogin() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { login, isAuthenticated } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, navigate, from]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Implement actual login logic
-        navigate("/dashboard");
+        setError("");
+        setIsLoading(true);
+        const result = await login(email, password);
+        setIsLoading(false);
+        if (result.success) {
+            navigate(from, { replace: true });
+        } else {
+            setError(result.error ?? "Error al iniciar sesión");
+        }
     };
 
     return (
@@ -128,6 +148,12 @@ export function AdminLogin() {
                                     </div>
                                 </div>
 
+                                {error && (
+                                    <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                                        {error}
+                                    </div>
+                                )}
+
                                 <div className="flex items-center justify-between text-sm">
                                     <label className="flex items-center gap-2 text-[#5B5B5B]">
                                         <input
@@ -146,9 +172,10 @@ export function AdminLogin() {
 
                                 <Button
                                     type="submit"
-                                    className="h-12 w-full rounded-xl bg-donamed-primary text-base font-semibold hover:bg-donamed-dark"
+                                    disabled={isLoading}
+                                    className="h-12 w-full rounded-xl bg-donamed-primary text-base font-semibold hover:bg-donamed-dark disabled:opacity-70"
                                 >
-                                    Iniciar sesión
+                                    {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                                 </Button>
                             </form>
 

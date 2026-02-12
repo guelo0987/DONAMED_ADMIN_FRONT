@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { Search, ChevronDown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const pageTitles: Record<string, string> = {
     "/": "Dashboard",
@@ -19,6 +20,7 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
     const location = useLocation();
+    const { user } = useAuth();
     const title =
         pageTitles[location.pathname] ??
         (location.pathname.startsWith("/inventario")
@@ -61,8 +63,10 @@ export function Header() {
 
                 {/* User Info */}
                 <div className="flex flex-col">
-                    <span className="text-base font-medium text-[#404040]">Carlos</span>
-                    <span className="text-sm text-[#5B5B5B]/50">Admin</span>
+                    <span className="text-base font-medium text-[#404040]">
+                        {user?.nombre ?? user?.correo?.split("@")[0] ?? "Usuario"}
+                    </span>
+                    <span className="text-sm text-[#5B5B5B]/50">{user?.rol ?? "Admin"}</span>
                 </div>
 
                 {/* Dropdown Arrow */}

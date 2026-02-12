@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AdminLayout } from "./components/layout";
+import { RequireAuth } from "./components/auth/RequireAuth";
 import { Dashboard } from "./Pages/Dashboard";
 import { AdminLogin } from "./Pages/Auth";
 import { DetalleSolicitud, ListaSolicitudes } from "./Pages/Solicitudes";
@@ -49,7 +50,11 @@ const router = createBrowserRouter([
   // Protected Routes with AdminLayout
   {
     path: "/",
-    element: <AdminLayout />,
+    element: (
+      <RequireAuth>
+        <AdminLayout />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,
