@@ -8,6 +8,7 @@ import {
     Pill,
     Briefcase,
     Users,
+    UserCircle,
     Settings,
     LogOut,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const menuItems = [
     { icon: Briefcase, label: "Proveedores", path: "/proveedores" },
     { icon: Pill, label: "Medicamentos", path: "/medicamentos" },
     { icon: Users, label: "Usuarios", path: "/usuarios" },
+    { icon: UserCircle, label: "Personas", path: "/personas" },
     { icon: Settings, label: "Configuración", path: "/configuracion" },
 ];
 

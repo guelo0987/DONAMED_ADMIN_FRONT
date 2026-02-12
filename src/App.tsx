@@ -40,6 +40,12 @@ import {
   ListaUsuarios,
   RegistrarUsuario,
 } from "./Pages/Usuarios";
+import {
+  DetallePersona,
+  EditarPersona,
+  ListaPersonas,
+  RegistrarPersona,
+} from "./Pages/Personas";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -171,6 +177,22 @@ const router = createBrowserRouter([
       {
         path: "usuarios/:id/editar",
         element: <EditarUsuario />,
+      },
+      {
+        path: "personas",
+        element: <ListaPersonas />,
+      },
+      {
+        path: "personas/nueva",
+        element: <RegistrarPersona />,
+      },
+      {
+        path: "personas/:cedula",
+        element: <DetallePersona />,
+      },
+      {
+        path: "personas/:cedula/editar",
+        element: <EditarPersona />,
       },
     ],
   },

@@ -1,36 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-type EstadoUsuario = "ACTIVO" | "INACTIVO" | "ELIMINADO";
-
-interface UsuarioDetalle {
-    idusuario: number;
-    correo: string;
-    cedula_usuario: string;
-    codigo_rol: number;
-    ultimo_ingreso: string | null;
-    creado_en: string;
-    actualizado_en: string;
-    estado: EstadoUsuario;
-    foto_url: string | null;
-    nombreRol?: string;
-}
-
-const detalleMock: UsuarioDetalle = {
-    idusuario: 1,
-    correo: "admin@donamed.org",
-    cedula_usuario: "0912345678",
-    codigo_rol: 1,
-    ultimo_ingreso: "2025-02-11T08:30:00",
-    creado_en: "2024-01-10T10:00:00",
-    actualizado_en: "2025-02-11T08:30:00",
-    estado: "ACTIVO",
-    foto_url: null,
-    nombreRol: "Administrador",
-};
+import { usuarioService } from "@/services/usuarioService";
+import type { Usuario, EstadoUsuario } from "@/types/usuario.types";
 
 const statusStyles: Record<EstadoUsuario, string> = {
     ACTIVO: "bg-success-light text-success",
@@ -59,11 +33,56 @@ function formatDateTime(dateStr: string | null): string {
 export function DetalleUsuario() {
     const navigate = useNavigate();
     const { id } = useParams();
+    const [usuario, setUsuario] = useState<Usuario | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const usuario = useMemo(() => {
-        const num = id ? parseInt(id, 10) : detalleMock.idusuario;
-        return { ...detalleMock, idusuario: num };
+    useEffect(() => {
+        if (!id) return;
+        const num = parseInt(id, 10);
+        if (isNaN(num)) {
+            setError("ID inválido");
+            setIsLoading(false);
+            return;
+        }
+        usuarioService
+            .getUsuarioById(num)
+            .then(setUsuario)
+            .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar"))
+            .finally(() => setIsLoading(false));
     }, [id]);
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                    <p className="text-sm text-[#5B5B5B]">Cargando usuario...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !usuario) {
+        return (
+            <div className="space-y-6">
+                <button
+                    type="button"
+                    onClick={() => navigate("/usuarios")}
+                    className="inline-flex items-center text-sm font-medium text-[#5B5B5B] hover:text-[#1E1E1E]"
+                >
+                    ← Volver a usuarios
+                </button>
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Usuario no encontrado"}
+                </div>
+            </div>
+        );
+    }
+
+    const nombreCompleto = usuario.persona
+        ? `${usuario.persona.nombre} ${usuario.persona.apellidos}`.trim()
+        : null;
 
     return (
         <div className="space-y-6">
@@ -91,13 +110,6 @@ export function DetalleUsuario() {
                     >
                         <Link to={`/usuarios/${usuario.idusuario}/editar`}>Editar</Link>
                     </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 rounded-xl border-2 border-donamed-primary text-donamed-primary"
-                    >
-                        {usuario.estado === "ACTIVO" ? "Desactivar" : "Activar"}
-                    </Button>
                 </div>
             </div>
 
@@ -113,9 +125,9 @@ export function DetalleUsuario() {
                             </p>
                         </div>
                         <span
-                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[usuario.estado]}`}
+                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${usuario.estado ? statusStyles[usuario.estado] : "bg-gray-100 text-gray-600"}`}
                         >
-                            {estadoLabels[usuario.estado]}
+                            {usuario.estado ? estadoLabels[usuario.estado] : "—"}
                         </span>
                     </div>
 
@@ -130,14 +142,22 @@ export function DetalleUsuario() {
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Cédula
                             </span>
-                            <span className="text-[#2D3748]">{usuario.cedula_usuario}</span>
+                            <span className="text-[#2D3748]">{usuario.cedula_usuario ?? "—"}</span>
                         </div>
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Rol (codigo_rol)
+                                Rol
                             </span>
-                            <span className="text-[#2D3748]">{usuario.nombreRol}</span>
+                            <span className="text-[#2D3748]">{usuario.rol?.nombre ?? "—"}</span>
                         </div>
+                        {nombreCompleto && (
+                            <div className="flex flex-col gap-1 text-sm">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Nombre completo
+                                </span>
+                                <span className="text-[#2D3748]">{nombreCompleto}</span>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Último ingreso
@@ -162,16 +182,20 @@ export function DetalleUsuario() {
                                 {formatDateTime(usuario.actualizado_en)}
                             </span>
                         </div>
-                        {usuario.foto_url && (
+                        {usuario.persona?.telefono && (
+                            <div className="flex flex-col gap-1 text-sm">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Teléfono
+                                </span>
+                                <span className="text-[#2D3748]">{usuario.persona.telefono}</span>
+                            </div>
+                        )}
+                        {usuario.persona?.direccion && (
                             <div className="flex flex-col gap-1 text-sm md:col-span-2">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Foto
+                                    Dirección
                                 </span>
-                                <img
-                                    src={usuario.foto_url}
-                                    alt="Foto usuario"
-                                    className="mt-2 h-20 w-20 rounded-full object-cover"
-                                />
+                                <span className="text-[#2D3748]">{usuario.persona.direccion}</span>
                             </div>
                         )}
                     </div>

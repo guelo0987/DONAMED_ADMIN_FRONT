@@ -1,26 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const roles = [
-    { codigo: 1, nombre: "Administrador" },
-    { codigo: 2, nombre: "Coordinador" },
-    { codigo: 3, nombre: "Operador" },
-];
+import { usuarioService } from "@/services/usuarioService";
+import { catalogoService } from "@/services/catalogoService";
+import type { Rol } from "@/types/persona.types";
 
 export function RegistrarUsuario() {
     const navigate = useNavigate();
+    const [roles, setRoles] = useState<Rol[]>([]);
     const [correo, setCorreo] = useState("");
-    const [contraseña, setContraseña] = useState("");
+    const [contrasena, setContrasena] = useState("");
     const [cedula_usuario, setCedula_usuario] = useState("");
-    const [codigo_rol, setCodigo_rol] = useState(1);
-    const [estado, setEstado] = useState<"ACTIVO" | "INACTIVO">("ACTIVO");
+    const [codigo_rol, setCodigo_rol] = useState<number>(1);
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        catalogoService
+            .getRoles()
+            .then((list) => {
+                setRoles(list);
+                if (list.length > 0) setCodigo_rol(list[0].codigorol);
+            })
+            .catch(() => setRoles([]));
+    }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Llamar API para crear usuario (contraseña hasheada en backend)
-        navigate("/usuarios");
+        setError("");
+        setIsLoading(true);
+        try {
+            await usuarioService.createUsuario({
+                correo: correo.trim(),
+                contrasena,
+                cedula_usuario: cedula_usuario.trim() || undefined,
+                codigo_rol: roles.length ? codigo_rol : undefined,
+            });
+            navigate("/usuarios");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al crear usuario");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -37,9 +59,15 @@ export function RegistrarUsuario() {
                     Registrar usuario
                 </h1>
                 <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                    Completa los datos según tabla usuario y rol.
+                    Completa los datos según tabla usuario y rol. La cédula debe existir en Personas.
                 </p>
             </div>
+
+            {error && (
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <Card className="overflow-hidden border-[#EEF1F4]">
@@ -64,8 +92,8 @@ export function RegistrarUsuario() {
                                 </label>
                                 <input
                                     type="password"
-                                    value={contraseña}
-                                    onChange={(e) => setContraseña(e.target.value)}
+                                    value={contrasena}
+                                    onChange={(e) => setContrasena(e.target.value)}
                                     required
                                     placeholder="••••••••"
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
@@ -73,13 +101,12 @@ export function RegistrarUsuario() {
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Cédula *
+                                    Cédula (persona existente)
                                 </label>
                                 <input
                                     type="text"
                                     value={cedula_usuario}
                                     onChange={(e) => setCedula_usuario(e.target.value)}
-                                    required
                                     maxLength={11}
                                     placeholder="0912345678"
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
@@ -90,28 +117,19 @@ export function RegistrarUsuario() {
                                     Rol *
                                 </label>
                                 <select
-                                    value={codigo_rol}
+                                    value={roles.length ? codigo_rol : ""}
                                     onChange={(e) => setCodigo_rol(Number(e.target.value))}
                                     className="h-10 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 >
-                                    {roles.map((r) => (
-                                        <option key={r.codigo} value={r.codigo}>
-                                            {r.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Estado
-                                </label>
-                                <select
-                                    value={estado}
-                                    onChange={(e) => setEstado(e.target.value as "ACTIVO" | "INACTIVO")}
-                                    className="h-10 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                >
-                                    <option value="ACTIVO">Activo</option>
-                                    <option value="INACTIVO">Inactivo</option>
+                                    {roles.length === 0 ? (
+                                        <option value="">Cargando roles...</option>
+                                    ) : (
+                                        roles.map((r) => (
+                                            <option key={r.codigorol} value={r.codigorol}>
+                                                {r.nombre}
+                                            </option>
+                                        ))
+                                    )}
                                 </select>
                             </div>
                         </div>
@@ -127,8 +145,12 @@ export function RegistrarUsuario() {
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary hover:bg-donamed-dark">
-                        Guardar usuario
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="h-11 rounded-xl bg-donamed-primary hover:bg-donamed-dark disabled:opacity-70"
+                    >
+                        {isLoading ? "Guardando..." : "Guardar usuario"}
                     </Button>
                 </div>
             </form>

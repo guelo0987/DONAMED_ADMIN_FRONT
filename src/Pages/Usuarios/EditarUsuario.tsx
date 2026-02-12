@@ -1,29 +1,81 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const roles = [
-    { codigo: 1, nombre: "Administrador" },
-    { codigo: 2, nombre: "Coordinador" },
-    { codigo: 3, nombre: "Operador" },
-];
+import { usuarioService } from "@/services/usuarioService";
+import { catalogoService } from "@/services/catalogoService";
+import type { Rol } from "@/types/persona.types";
 
 export function EditarUsuario() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [correo, setCorreo] = useState("admin@donamed.org");
-    const [cambiarContraseña, setCambiarContraseña] = useState(false);
-    const [nuevaContraseña, setNuevaContraseña] = useState("");
-    const [cedula_usuario, setCedula_usuario] = useState("0912345678");
-    const [codigo_rol, setCodigo_rol] = useState(1);
+    const [roles, setRoles] = useState<Rol[]>([]);
+    const [correo, setCorreo] = useState("");
+    const [cambiarContrasena, setCambiarContrasena] = useState(false);
+    const [nuevaContrasena, setNuevaContrasena] = useState("");
+    const [codigo_rol, setCodigo_rol] = useState<number>(1);
     const [estado, setEstado] = useState<"ACTIVO" | "INACTIVO">("ACTIVO");
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        catalogoService.getRoles().then(setRoles).catch(() => setRoles([]));
+    }, []);
+
+    useEffect(() => {
+        if (!id) return;
+        const num = parseInt(id, 10);
+        if (isNaN(num)) return;
+        usuarioService
+            .getUsuarioById(num)
+            .then((u) => {
+                setCorreo(u.correo);
+                setCodigo_rol(u.codigo_rol ?? 1);
+                setEstado(
+                    (u.estado === "ACTIVO" || u.estado === "INACTIVO" ? u.estado : "ACTIVO") as
+                        | "ACTIVO"
+                        | "INACTIVO"
+                );
+            })
+            .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar"))
+            .finally(() => setIsLoading(false));
+    }, [id]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Llamar API para actualizar
-        navigate(`/usuarios/${id}`);
+        if (!id) return;
+        setError("");
+        setIsSaving(true);
+        const num = parseInt(id, 10);
+        try {
+            const payload: { correo?: string; contrasena?: string; codigo_rol?: number; estado?: "ACTIVO" | "INACTIVO" } = {
+                correo: correo.trim(),
+                codigo_rol,
+                estado,
+            };
+            if (cambiarContrasena && nuevaContrasena) {
+                payload.contrasena = nuevaContrasena;
+            }
+            await usuarioService.updateUsuario(num, payload);
+            navigate(`/usuarios/${id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al actualizar");
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    if (isLoading && !correo) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                    <p className="text-sm text-[#5B5B5B]">Cargando...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -42,6 +94,12 @@ export function EditarUsuario() {
                     Actualiza los datos del usuario {id}.
                 </p>
             </div>
+
+            {error && (
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <Card className="overflow-hidden border-[#EEF1F4]">
@@ -64,19 +122,6 @@ export function EditarUsuario() {
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Cédula *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cedula_usuario}
-                                    onChange={(e) => setCedula_usuario(e.target.value)}
-                                    required
-                                    maxLength={11}
-                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                     Rol *
                                 </label>
                                 <select
@@ -85,7 +130,7 @@ export function EditarUsuario() {
                                     className="h-10 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 >
                                     {roles.map((r) => (
-                                        <option key={r.codigo} value={r.codigo}>
+                                        <option key={r.codigorol} value={r.codigorol}>
                                             {r.nombre}
                                         </option>
                                     ))}
@@ -108,19 +153,19 @@ export function EditarUsuario() {
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
-                                        checked={cambiarContraseña}
-                                        onChange={(e) => setCambiarContraseña(e.target.checked)}
+                                        checked={cambiarContrasena}
+                                        onChange={(e) => setCambiarContrasena(e.target.checked)}
                                         className="h-4 w-4 rounded border-[#E7E7E7]"
                                     />
                                     <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                         Cambiar contraseña
                                     </span>
                                 </label>
-                                {cambiarContraseña && (
+                                {cambiarContrasena && (
                                     <input
                                         type="password"
-                                        value={nuevaContraseña}
-                                        onChange={(e) => setNuevaContraseña(e.target.value)}
+                                        value={nuevaContrasena}
+                                        onChange={(e) => setNuevaContrasena(e.target.value)}
                                         placeholder="Nueva contraseña"
                                         className="mt-2 h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                     />
@@ -139,8 +184,12 @@ export function EditarUsuario() {
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary hover:bg-donamed-dark">
-                        Guardar cambios
+                    <Button
+                        type="submit"
+                        disabled={isSaving}
+                        className="h-11 rounded-xl bg-donamed-primary hover:bg-donamed-dark disabled:opacity-70"
+                    >
+                        {isSaving ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
             </form>
