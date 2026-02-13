@@ -4,7 +4,7 @@ import { Header } from "./Header";
 
 export function AdminLayout() {
     return (
-        <div className="min-h-screen bg-[#F8F7F7]">
+        <div className="min-h-screen bg-[#F8F7F7] transition-colors dark:bg-slate-900">
             <Sidebar />
             <Header />
 

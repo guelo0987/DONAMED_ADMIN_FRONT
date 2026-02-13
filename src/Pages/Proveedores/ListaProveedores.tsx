@@ -118,16 +118,16 @@ export function ListaProveedores() {
                                 >
                                     {item.estado}
                                 </span>
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-2">
                                     <Link
                                         to={`/proveedores/${item.id}`}
-                                        className="inline-flex h-9 items-center justify-center rounded-xl bg-donamed-primary px-4 text-xs font-semibold text-white transition hover:bg-donamed-dark"
+                                        className="inline-flex shrink-0 h-9 items-center justify-center whitespace-nowrap rounded-xl bg-donamed-primary px-4 text-xs font-semibold text-white transition hover:bg-donamed-dark"
                                     >
                                         Ver detalle
                                     </Link>
                                     <Link
                                         to={`/proveedores/${item.id}/editar`}
-                                        className="inline-flex h-9 items-center justify-center rounded-xl border-2 border-donamed-primary bg-white px-4 text-xs font-semibold text-donamed-primary transition hover:bg-[#F7F7F7]"
+                                        className="inline-flex shrink-0 h-9 items-center justify-center whitespace-nowrap rounded-xl border-2 border-donamed-primary bg-white px-4 text-xs font-semibold text-donamed-primary transition hover:bg-[#F7F7F7]"
                                     >
                                         Editar
                                     </Link>

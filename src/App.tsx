@@ -39,6 +39,30 @@ import {
   ListaUsuarios,
   RegistrarUsuario,
 } from "./Pages/Usuarios";
+import {
+  DetalleCategoria,
+  EditarCategoria,
+  ListaCategorias,
+  RegistrarCategoria,
+} from "./Pages/CategoriasMedicamentos";
+import {
+  DetalleCategoriaEnfermedad,
+  EditarCategoriaEnfermedad,
+  ListaCategoriasEnfermedades,
+  RegistrarCategoriaEnfermedad,
+} from "./Pages/CategoriasEnfermedades";
+import {
+  DetalleCiudad,
+  EditarCiudad,
+  ListaCiudades,
+  RegistrarCiudad,
+} from "./Pages/Ciudades";
+import {
+  DetalleProvincia,
+  EditarProvincia,
+  ListaProvincias,
+  RegistrarProvincia,
+} from "./Pages/Provincias";
 
 const router = createBrowserRouter([
   // Auth Routes
@@ -150,6 +174,70 @@ const router = createBrowserRouter([
       {
         path: "medicamentos/:id/editar",
         element: <EditarMedicamento />,
+      },
+      {
+        path: "categorias",
+        element: <ListaCategorias />,
+      },
+      {
+        path: "categorias/nuevo",
+        element: <RegistrarCategoria />,
+      },
+      {
+        path: "categorias/:id",
+        element: <DetalleCategoria />,
+      },
+      {
+        path: "categorias/:id/editar",
+        element: <EditarCategoria />,
+      },
+      {
+        path: "categorias-enfermedades",
+        element: <ListaCategoriasEnfermedades />,
+      },
+      {
+        path: "categorias-enfermedades/nuevo",
+        element: <RegistrarCategoriaEnfermedad />,
+      },
+      {
+        path: "categorias-enfermedades/:id",
+        element: <DetalleCategoriaEnfermedad />,
+      },
+      {
+        path: "categorias-enfermedades/:id/editar",
+        element: <EditarCategoriaEnfermedad />,
+      },
+      {
+        path: "ciudades",
+        element: <ListaCiudades />,
+      },
+      {
+        path: "ciudades/nuevo",
+        element: <RegistrarCiudad />,
+      },
+      {
+        path: "ciudades/:id",
+        element: <DetalleCiudad />,
+      },
+      {
+        path: "ciudades/:id/editar",
+        element: <EditarCiudad />,
+      },
+      {
+        path: "provincias",
+        element: <ListaProvincias />,
+      },
+      {
+        path: "provincias/nuevo",
+        element: <RegistrarProvincia />,
+      },
+      {
+        path: "provincias/:id",
+        element: <DetalleProvincia />,
+      },
+      {
+        path: "provincias/:id/editar",
+        element: <EditarProvincia />,
       },
       {
         path: "usuarios",
