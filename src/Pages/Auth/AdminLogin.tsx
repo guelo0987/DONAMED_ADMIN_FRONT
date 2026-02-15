@@ -48,9 +48,9 @@ export function AdminLogin() {
                     {/* Branding / Metrics */}
                     <div className="flex flex-col justify-center rounded-3xl bg-white/10 p-10 text-white shadow-[0px_30px_80px_-40px_rgba(0,0,0,0.45)] backdrop-blur animate-in fade-in-0 slide-in-from-left-6 duration-700">
                         <img
-                            src="/logos/donamed_logo_header.png"
+                            src="/logos/donamed-negativo.png"
                             alt="DONAMED"
-                            className="h-12 w-fit object-contain"
+                            className="h-24 w-fit object-contain md:h-28"
                         />
                         <h1 className="mt-6 text-3xl font-semibold leading-tight md:text-4xl">
                             Bienvenido al Panel Administrativo DONAMED
