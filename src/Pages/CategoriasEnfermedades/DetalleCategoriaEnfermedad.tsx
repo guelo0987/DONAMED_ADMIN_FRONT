@@ -1,50 +1,74 @@
-import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const categoriasMock: Record<string, { id: string; nombre: string; descripcion: string; estado: string }> = {
-    "CEN-001": {
-        id: "CEN-001",
-        nombre: "Infecciosas",
-        descripcion: "Enfermedades causadas por agentes infecciosos (virus, bacterias, hongos, parásitos). Incluyen enfermedades transmisibles y zoonóticas.",
-        estado: "Activo",
-    },
-    "CEN-002": {
-        id: "CEN-002",
-        nombre: "Crónicas no transmisibles",
-        descripcion: "Enfermedades cardiovasculares, diabetes, cáncer, respiratorias crónicas y otras condiciones de larga duración.",
-        estado: "Activo",
-    },
-    "CEN-003": {
-        id: "CEN-003",
-        nombre: "Cardiovasculares",
-        descripcion: "Enfermedades del corazón y del sistema circulatorio.",
-        estado: "Activo",
-    },
-    "CEN-004": {
-        id: "CEN-004",
-        nombre: "Respiratorias",
-        descripcion: "Enfermedades del tracto respiratorio y pulmones.",
-        estado: "Activo",
-    },
-    "CEN-005": {
-        id: "CEN-005",
-        nombre: "Oncológicas",
-        descripcion: "Trastornos relacionados con tumores y cáncer.",
-        estado: "Inactivo",
-    },
-};
+import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
+import type { Enfermedad } from "@/types/catalogo.types";
 
 export function DetalleCategoriaEnfermedad() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const detalle = useMemo(() => {
-        if (!id) return null;
-        return categoriasMock[id] ?? { id, nombre: "Categoría", descripcion: "", estado: "Activo" };
+    const { addToast } = useToast();
+    const [enfermedad, setEnfermedad] = useState<Enfermedad | null>(null);
+    const [eliminarTarget, setEliminarTarget] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchEnfermedad = useCallback(async () => {
+        const idNum = id ? parseInt(id, 10) : NaN;
+        if (!id || isNaN(idNum)) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const enfermedades = await catalogoService.getEnfermedades();
+            const found = enfermedades.find((e) => e.idenfermedad === idNum);
+            if (found) setEnfermedad(found);
+            else setError("Categoría no encontrada");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al cargar categoría");
+        } finally {
+            setIsLoading(false);
+        }
     }, [id]);
 
-    if (!detalle) return null;
+    useEffect(() => {
+        fetchEnfermedad();
+    }, [fetchEnfermedad]);
+
+    const handleEliminar = async () => {
+        if (!enfermedad) return;
+        const nombre = enfermedad.nombre;
+        try {
+            await catalogoService.deleteEnfermedad(enfermedad.idenfermedad);
+            addToast({ variant: "success", title: "Categoría eliminada", message: `${nombre} fue eliminada correctamente.` });
+            navigate("/categorias-enfermedades");
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al eliminar categoría." });
+            setEliminarTarget(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="text-sm text-[#5B5B5B]/60">Cargando categoría...</div>
+            </div>
+        );
+    }
+
+    if (error || !enfermedad) {
+        return (
+            <div className="space-y-6">
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Categoría no encontrada"}
+                </div>
+                <Button variant="outline" onClick={() => navigate("/categorias-enfermedades")} className="rounded-xl">
+                    Volver a categorías de enfermedades
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -61,7 +85,7 @@ export function DetalleCategoriaEnfermedad() {
                         Detalle de la categoría
                     </h1>
                     <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                        Información general y estado actual.
+                        Información general.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -69,19 +93,13 @@ export function DetalleCategoriaEnfermedad() {
                         asChild
                         className="h-10 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
                     >
-                        <a href={`/categorias-enfermedades/${detalle.id}/editar`}>Editar categoría</a>
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 rounded-xl border-2 border-donamed-primary text-donamed-primary"
-                    >
-                        {detalle.estado === "Activo" ? "Desactivar" : "Activar"}
+                        <Link to={`/categorias-enfermedades/${enfermedad.idenfermedad}/editar`}>Editar categoría</Link>
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
                         className="h-10 rounded-xl bg-[#1C5961] px-6 text-white hover:bg-[#16484F]"
+                        onClick={() => setEliminarTarget(true)}
                     >
                         Eliminar
                     </Button>
@@ -95,37 +113,36 @@ export function DetalleCategoriaEnfermedad() {
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Código
                             </span>
-                            <span className="text-[#2D3748]">{detalle.id}</span>
+                            <span className="text-[#2D3748]">{enfermedad.idenfermedad}</span>
                         </div>
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Nombre
                             </span>
-                            <span className="text-[#2D3748]">{detalle.nombre}</span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Estado
-                            </span>
-                            <span
-                                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                                    detalle.estado === "Activo"
-                                        ? "bg-success-light text-success"
-                                        : "bg-warning-light text-warning"
-                                }`}
-                            >
-                                {detalle.estado}
-                            </span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm md:col-span-2">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Descripción
-                            </span>
-                            <span className="text-[#2D3748]">{detalle.descripcion || "—"}</span>
+                            <span className="text-[#2D3748]">{enfermedad.nombre}</span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
+
+            {eliminarTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-semibold text-[#1E1E1E]">Eliminar categoría</h3>
+                        <p className="mt-2 text-sm text-[#5B5B5B]">
+                            ¿Está seguro de eliminar la categoría &quot;{enfermedad.nombre}&quot;? Esta acción no se puede deshacer.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setEliminarTarget(false)} className="rounded-xl">
+                                Cancelar
+                            </Button>
+                            <Button className="rounded-xl bg-danger text-white hover:bg-danger/90" onClick={handleEliminar}>
+                                Eliminar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,44 +1,74 @@
-import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const categoriasMock: Record<string, { id: string; nombre: string; descripcion: string; estado: string }> = {
-    "CAT-001": {
-        id: "CAT-001",
-        nombre: "Antibióticos",
-        descripcion: "Medicamentos para el tratamiento de infecciones bacterianas. Incluyen penicilinas, cefalosporinas, macrólidos y otros.",
-        estado: "Activo",
-    },
-    "CAT-002": {
-        id: "CAT-002",
-        nombre: "Analgésicos",
-        descripcion: "Medicamentos para aliviar el dolor leve a moderado.",
-        estado: "Activo",
-    },
-    "CAT-003": {
-        id: "CAT-003",
-        nombre: "Antidiabéticos",
-        descripcion: "Medicamentos para el control de la diabetes tipo 1 y tipo 2.",
-        estado: "Activo",
-    },
-    "CAT-004": {
-        id: "CAT-004",
-        nombre: "Antiinflamatorios",
-        descripcion: "Medicamentos para reducir la inflamación y el dolor.",
-        estado: "Inactivo",
-    },
-};
+import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
+import type { Categoria } from "@/types/catalogo.types";
 
 export function DetalleCategoria() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const detalle = useMemo(() => {
-        if (!id) return null;
-        return categoriasMock[id] ?? { id, nombre: "Categoría", descripcion: "", estado: "Activo" };
+    const { addToast } = useToast();
+    const [categoria, setCategoria] = useState<Categoria | null>(null);
+    const [eliminarTarget, setEliminarTarget] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchCategoria = useCallback(async () => {
+        const idNum = id ? parseInt(id, 10) : NaN;
+        if (!id || isNaN(idNum)) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const categorias = await catalogoService.getCategorias();
+            const found = categorias.find((c) => c.idcategoria === idNum);
+            if (found) setCategoria(found);
+            else setError("Categoría no encontrada");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al cargar categoría");
+        } finally {
+            setIsLoading(false);
+        }
     }, [id]);
 
-    if (!detalle) return null;
+    useEffect(() => {
+        fetchCategoria();
+    }, [fetchCategoria]);
+
+    const handleEliminar = async () => {
+        if (!categoria) return;
+        const nombre = categoria.nombre;
+        try {
+            await catalogoService.deleteCategoria(categoria.idcategoria);
+            addToast({ variant: "success", title: "Categoría eliminada", message: `${nombre} fue eliminada correctamente.` });
+            navigate("/categorias");
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al eliminar categoría." });
+            setEliminarTarget(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="text-sm text-[#5B5B5B]/60">Cargando categoría...</div>
+            </div>
+        );
+    }
+
+    if (error || !categoria) {
+        return (
+            <div className="space-y-6">
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Categoría no encontrada"}
+                </div>
+                <Button variant="outline" onClick={() => navigate("/categorias")} className="rounded-xl">
+                    Volver a categorías
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -55,7 +85,7 @@ export function DetalleCategoria() {
                         Detalle de la categoría
                     </h1>
                     <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                        Información general y estado actual.
+                        Información general.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -63,19 +93,13 @@ export function DetalleCategoria() {
                         asChild
                         className="h-10 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
                     >
-                        <a href={`/categorias/${detalle.id}/editar`}>Editar categoría</a>
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 rounded-xl border-2 border-donamed-primary text-donamed-primary"
-                    >
-                        {detalle.estado === "Activo" ? "Desactivar" : "Activar"}
+                        <Link to={`/categorias/${categoria.idcategoria}/editar`}>Editar categoría</Link>
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
                         className="h-10 rounded-xl bg-[#1C5961] px-6 text-white hover:bg-[#16484F]"
+                        onClick={() => setEliminarTarget(true)}
                     >
                         Eliminar
                     </Button>
@@ -89,37 +113,36 @@ export function DetalleCategoria() {
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Código
                             </span>
-                            <span className="text-[#2D3748]">{detalle.id}</span>
+                            <span className="text-[#2D3748]">{categoria.idcategoria}</span>
                         </div>
                         <div className="flex flex-col gap-1 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 Nombre
                             </span>
-                            <span className="text-[#2D3748]">{detalle.nombre}</span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Estado
-                            </span>
-                            <span
-                                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                                    detalle.estado === "Activo"
-                                        ? "bg-success-light text-success"
-                                        : "bg-warning-light text-warning"
-                                }`}
-                            >
-                                {detalle.estado}
-                            </span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm md:col-span-2">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Descripción
-                            </span>
-                            <span className="text-[#2D3748]">{detalle.descripcion || "—"}</span>
+                            <span className="text-[#2D3748]">{categoria.nombre}</span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
+
+            {eliminarTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-semibold text-[#1E1E1E]">Eliminar categoría</h3>
+                        <p className="mt-2 text-sm text-[#5B5B5B]">
+                            ¿Está seguro de eliminar la categoría &quot;{categoria.nombre}&quot;? Esta acción no se puede deshacer.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setEliminarTarget(false)} className="rounded-xl">
+                                Cancelar
+                            </Button>
+                            <Button className="rounded-xl bg-danger text-white hover:bg-danger/90" onClick={handleEliminar}>
+                                Eliminar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -2,16 +2,32 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
 
 export function RegistrarProvincia() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
+    const [codigoprovincia, setCodigoprovincia] = useState("");
     const [nombre, setNombre] = useState("");
-    const [pais, setPais] = useState("");
-    const [descripcion, setDescripcion] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        navigate("/provincias");
+        if (!codigoprovincia.trim() || !nombre.trim()) {
+            addToast({ variant: "error", title: "Campos requeridos", message: "Código y nombre son obligatorios." });
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            await ubicacionService.createProvincia({ codigoprovincia: codigoprovincia.trim(), nombre: nombre.trim() });
+            addToast({ variant: "success", title: "Provincia registrada", message: `${nombre} fue creada correctamente.` });
+            navigate("/provincias");
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al registrar provincia." });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -35,6 +51,17 @@ export function RegistrarProvincia() {
                     <CardContent className="p-6">
                         <div className="grid gap-4">
                             <div className="flex flex-col gap-2 text-sm">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Código</span>
+                                <input
+                                    type="text"
+                                    value={codigoprovincia}
+                                    onChange={(e) => setCodigoprovincia(e.target.value)}
+                                    placeholder="Ej: CUN"
+                                    maxLength={10}
+                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2 text-sm">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Nombre</span>
                                 <input
                                     type="text"
@@ -42,26 +69,6 @@ export function RegistrarProvincia() {
                                     onChange={(e) => setNombre(e.target.value)}
                                     placeholder="Ej: Cundinamarca"
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">País</span>
-                                <input
-                                    type="text"
-                                    value={pais}
-                                    onChange={(e) => setPais(e.target.value)}
-                                    placeholder="Ej: Colombia"
-                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Descripción</span>
-                                <textarea
-                                    value={descripcion}
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    placeholder="Descripción de la provincia"
-                                    rows={4}
-                                    className="rounded-lg border border-[#E7E7E7] px-3 py-2 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
                         </div>
@@ -72,8 +79,8 @@ export function RegistrarProvincia() {
                     <Button type="button" variant="outline" className="h-11 rounded-xl" onClick={() => navigate("/provincias")}>
                         Cancelar
                     </Button>
-                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark">
-                        Guardar provincia
+                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark" disabled={isSubmitting}>
+                        {isSubmitting ? "Guardando..." : "Guardar provincia"}
                     </Button>
                 </div>
             </form>

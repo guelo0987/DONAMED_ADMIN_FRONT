@@ -1,49 +1,87 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const provinciasMock: Record<string, { id: string; nombre: string; pais: string; descripcion: string }> = {
-    "PRO-001": { id: "PRO-001", nombre: "Cundinamarca", pais: "Colombia", descripcion: "Departamento del centro del país" },
-    "PRO-002": { id: "PRO-002", nombre: "Antioquia", pais: "Colombia", descripcion: "Departamento del noroccidente" },
-    "PRO-003": { id: "PRO-003", nombre: "Valle del Cauca", pais: "Colombia", descripcion: "Departamento del suroccidente" },
-    "PRO-004": { id: "PRO-004", nombre: "Atlántico", pais: "Colombia", descripcion: "Departamento de la costa Caribe" },
-    "PRO-005": { id: "PRO-005", nombre: "Bolívar", pais: "Colombia", descripcion: "Departamento del Caribe colombiano" },
-};
+import { ubicacionService } from "@/services/ubicacionService";
+import { useToast } from "@/contexts/ToastContext";
+import type { ProvinciaConCiudades } from "@/services/ubicacionService";
 
 export function EditarProvincia() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const detalle = useMemo(() => {
-        if (!id) return null;
-        return provinciasMock[id] ?? { id, nombre: "", pais: "", descripcion: "" };
+    const { addToast } = useToast();
+    const [provincia, setProvincia] = useState<ProvinciaConCiudades | null>(null);
+    const [nombre, setNombre] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchProvincia = useCallback(async () => {
+        if (!id) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const provincias = await ubicacionService.getProvincias();
+            const found = provincias.find((p) => p.codigoprovincia === id);
+            if (found) {
+                setProvincia(found);
+                setNombre(found.nombre);
+            } else {
+                setError("Provincia no encontrada");
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al cargar provincia");
+        } finally {
+            setIsLoading(false);
+        }
     }, [id]);
 
-    const [nombre, setNombre] = useState(detalle?.nombre ?? "");
-    const [pais, setPais] = useState(detalle?.pais ?? "");
-    const [descripcion, setDescripcion] = useState(detalle?.descripcion ?? "");
-
     useEffect(() => {
-        if (detalle) {
-            setNombre(detalle.nombre);
-            setPais(detalle.pais);
-            setDescripcion(detalle.descripcion);
-        }
-    }, [detalle?.id]);
+        fetchProvincia();
+    }, [fetchProvincia]);
 
-    if (!detalle) return null;
-
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        navigate(`/provincias/${detalle.id}`);
+        if (!provincia || !nombre.trim()) return;
+        setIsSubmitting(true);
+        try {
+            await ubicacionService.updateProvincia(provincia.codigoprovincia, { nombre: nombre.trim() });
+            addToast({ variant: "success", title: "Provincia actualizada", message: `${nombre} fue actualizada correctamente.` });
+            navigate(`/provincias/${provincia.codigoprovincia}`);
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al actualizar provincia." });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="text-sm text-[#5B5B5B]/60">Cargando provincia...</div>
+            </div>
+        );
+    }
+
+    if (error || !provincia) {
+        return (
+            <div className="space-y-6">
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Provincia no encontrada"}
+                </div>
+                <Button variant="outline" onClick={() => navigate("/provincias")} className="rounded-xl">
+                    Volver a provincias
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div>
                 <button
                     type="button"
-                    onClick={() => navigate(`/provincias/${detalle.id}`)}
+                    onClick={() => navigate(`/provincias/${provincia.codigoprovincia}`)}
                     className="mb-2 inline-flex items-center text-sm font-medium text-[#5B5B5B] hover:text-[#1E1E1E]"
                 >
                     ← Volver a la provincia
@@ -58,7 +96,7 @@ export function EditarProvincia() {
                         <div className="grid gap-4">
                             <div className="flex flex-col gap-2 text-sm">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Código</span>
-                                <span className="h-10 rounded-lg border border-[#E7E7E7] bg-[#FBFBFC] px-3 py-2 text-sm text-[#5B5B5B]">{detalle.id}</span>
+                                <span className="h-10 rounded-lg border border-[#E7E7E7] bg-[#FBFBFC] px-3 py-2 text-sm text-[#5B5B5B]">{provincia.codigoprovincia}</span>
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Nombre</span>
@@ -69,34 +107,16 @@ export function EditarProvincia() {
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">País</span>
-                                <input
-                                    type="text"
-                                    value={pais}
-                                    onChange={(e) => setPais(e.target.value)}
-                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Descripción</span>
-                                <textarea
-                                    value={descripcion}
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    rows={4}
-                                    className="rounded-lg border border-[#E7E7E7] px-3 py-2 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 <div className="flex flex-wrap items-center justify-end gap-3">
-                    <Button type="button" variant="outline" className="h-11 rounded-xl" onClick={() => navigate(`/provincias/${detalle.id}`)}>
+                    <Button type="button" variant="outline" className="h-11 rounded-xl" onClick={() => navigate(`/provincias/${provincia.codigoprovincia}`)}>
                         Cancelar
                     </Button>
-                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark">
-                        Guardar cambios
+                    <Button type="submit" className="h-11 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark" disabled={isSubmitting}>
+                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
             </form>

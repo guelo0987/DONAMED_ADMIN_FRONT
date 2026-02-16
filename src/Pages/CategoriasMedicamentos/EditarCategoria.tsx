@@ -1,63 +1,88 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const categoriasMock: Record<string, { id: string; nombre: string; descripcion: string }> = {
-    "CAT-001": {
-        id: "CAT-001",
-        nombre: "Antibióticos",
-        descripcion: "Medicamentos para el tratamiento de infecciones bacterianas",
-    },
-    "CAT-002": {
-        id: "CAT-002",
-        nombre: "Analgésicos",
-        descripcion: "Medicamentos para aliviar el dolor",
-    },
-    "CAT-003": {
-        id: "CAT-003",
-        nombre: "Antidiabéticos",
-        descripcion: "Medicamentos para el control de la diabetes",
-    },
-    "CAT-004": {
-        id: "CAT-004",
-        nombre: "Antiinflamatorios",
-        descripcion: "Medicamentos para reducir la inflamación",
-    },
-};
+import { catalogoService } from "@/services/catalogoService";
+import { useToast } from "@/contexts/ToastContext";
+import type { Categoria } from "@/types/catalogo.types";
 
 export function EditarCategoria() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const detalle = useMemo(() => {
-        if (!id) return null;
-        return categoriasMock[id] ?? { id, nombre: "", descripcion: "" };
+    const { addToast } = useToast();
+    const [categoria, setCategoria] = useState<Categoria | null>(null);
+    const [nombre, setNombre] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchCategoria = useCallback(async () => {
+        const idNum = id ? parseInt(id, 10) : NaN;
+        if (!id || isNaN(idNum)) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const categorias = await catalogoService.getCategorias();
+            const found = categorias.find((c) => c.idcategoria === idNum);
+            if (found) {
+                setCategoria(found);
+                setNombre(found.nombre);
+            } else {
+                setError("Categoría no encontrada");
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al cargar categoría");
+        } finally {
+            setIsLoading(false);
+        }
     }, [id]);
 
-    const [nombre, setNombre] = useState(detalle?.nombre ?? "");
-    const [descripcion, setDescripcion] = useState(detalle?.descripcion ?? "");
-
     useEffect(() => {
-        if (detalle) {
-            setNombre(detalle.nombre);
-            setDescripcion(detalle.descripcion);
-        }
-    }, [detalle?.id]);
+        fetchCategoria();
+    }, [fetchCategoria]);
 
-    if (!detalle) return null;
-
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        // TODO: Implement save logic
-        navigate(`/categorias/${detalle.id}`);
+        if (!categoria || !nombre.trim()) return;
+        setIsSubmitting(true);
+        try {
+            await catalogoService.updateCategoria(categoria.idcategoria, { nombre: nombre.trim() });
+            addToast({ variant: "success", title: "Categoría actualizada", message: `${nombre} fue actualizada correctamente.` });
+            navigate(`/categorias/${categoria.idcategoria}`);
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al actualizar categoría." });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="text-sm text-[#5B5B5B]/60">Cargando categoría...</div>
+            </div>
+        );
+    }
+
+    if (error || !categoria) {
+        return (
+            <div className="space-y-6">
+                <div className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {error ?? "Categoría no encontrada"}
+                </div>
+                <Button variant="outline" onClick={() => navigate("/categorias")} className="rounded-xl">
+                    Volver a categorías
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div>
                 <button
                     type="button"
-                    onClick={() => navigate(`/categorias/${detalle.id}`)}
+                    onClick={() => navigate(`/categorias/${categoria.idcategoria}`)}
                     className="mb-2 inline-flex items-center text-sm font-medium text-[#5B5B5B] hover:text-[#1E1E1E]"
                 >
                     ← Volver a la categoría
@@ -77,7 +102,7 @@ export function EditarCategoria() {
                                     Código
                                 </span>
                                 <span className="h-10 rounded-lg border border-[#E7E7E7] bg-[#FBFBFC] px-3 py-2 text-sm text-[#5B5B5B]">
-                                    {detalle.id}
+                                    {categoria.idcategoria}
                                 </span>
                             </div>
                             <div className="flex flex-col gap-2 text-sm">
@@ -91,17 +116,6 @@ export function EditarCategoria() {
                                     className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
                             </div>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Descripción
-                                </span>
-                                <textarea
-                                    value={descripcion}
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    rows={4}
-                                    className="rounded-lg border border-[#E7E7E7] px-3 py-2 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                />
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -111,15 +125,16 @@ export function EditarCategoria() {
                         type="button"
                         variant="outline"
                         className="h-11 rounded-xl"
-                        onClick={() => navigate(`/categorias/${detalle.id}`)}
+                        onClick={() => navigate(`/categorias/${categoria.idcategoria}`)}
                     >
                         Cancelar
                     </Button>
                     <Button
                         type="submit"
                         className="h-11 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
+                        disabled={isSubmitting}
                     >
-                        Guardar cambios
+                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
             </form>

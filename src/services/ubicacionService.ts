@@ -49,4 +49,90 @@ export const ubicacionService = {
             throw new Error(getErrorMessage(err));
         }
     },
+
+    async createProvincia(payload: { codigoprovincia: string; nombre: string }): Promise<Provincia> {
+        try {
+            const { data } = await apiClient.post<ApiResponse<Provincia>>(
+                UBICACION_ENDPOINTS.provincias,
+                payload
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al crear provincia");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async updateProvincia(codigoprovincia: string, payload: { nombre: string }): Promise<Provincia> {
+        try {
+            const { data } = await apiClient.put<ApiResponse<Provincia>>(
+                UBICACION_ENDPOINTS.provinciaById(codigoprovincia),
+                payload
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al actualizar provincia");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async deleteProvincia(codigoprovincia: string): Promise<void> {
+        try {
+            const { data } = await apiClient.delete<ApiResponse>(
+                UBICACION_ENDPOINTS.provinciaById(codigoprovincia)
+            );
+            if (!data.success) {
+                throw new Error(data.error?.message ?? "Error al eliminar provincia");
+            }
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async createCiudad(payload: { codigociudad: string; nombre: string; codigoprovincia: string }): Promise<Ciudad> {
+        try {
+            const { data } = await apiClient.post<ApiResponse<Ciudad>>(
+                UBICACION_ENDPOINTS.ciudades,
+                payload
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al crear ciudad");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async updateCiudad(codigociudad: string, payload: { nombre?: string; codigoprovincia?: string }): Promise<Ciudad> {
+        try {
+            const { data } = await apiClient.put<ApiResponse<Ciudad>>(
+                UBICACION_ENDPOINTS.ciudadById(codigociudad),
+                payload
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al actualizar ciudad");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async deleteCiudad(codigociudad: string): Promise<void> {
+        try {
+            const { data } = await apiClient.delete<ApiResponse>(
+                UBICACION_ENDPOINTS.ciudadById(codigociudad)
+            );
+            if (!data.success) {
+                throw new Error(data.error?.message ?? "Error al eliminar ciudad");
+            }
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
 };
