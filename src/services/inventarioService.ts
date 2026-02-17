@@ -17,7 +17,7 @@ export interface InventarioItem {
     codigomedicamento: string;
     cantidad: number;
     almacen?: { idalmacen: number; nombre: string };
-    medicamento?: { codigomedicamento: string; nombre: string };
+    medicamento?: { codigomedicamento: string; nombre: string; descripcion?: string; compuesto_principal?: string };
     lote?: {
         codigolote: string;
         fechavencimiento?: string;
@@ -25,10 +25,16 @@ export interface InventarioItem {
     };
 }
 
-/**
- * GET /admin/inventario?almacen=&medicamento=
- * Tabla almacen_medicamento con filtros opcionales
- */
+export interface StockConsolidado {
+    nombre: string;
+    total: number;
+    almacenes: Array<{
+        almacen: string;
+        lote: string;
+        cantidad: number;
+    }>;
+}
+
 export const inventarioService = {
     async getInventario(params?: {
         almacen?: number;
@@ -46,6 +52,40 @@ export const inventarioService = {
                 ApiResponse<InventarioItem[]> & { count?: number }
             >(url);
 
+            if (!data.success || !data.data) {
+                return [];
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async ajustarInventario(payload: {
+        idalmacen: number;
+        codigolote: string;
+        codigomedicamento: string;
+        cantidad: number;
+    }): Promise<InventarioItem> {
+        try {
+            const { data } = await apiClient.post<ApiResponse<InventarioItem>>(
+                INVENTARIO_ENDPOINTS.inventario,
+                payload
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al ajustar inventario");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async getStockConsolidado(): Promise<StockConsolidado[]> {
+        try {
+            const { data } = await apiClient.get<ApiResponse<StockConsolidado[]>>(
+                INVENTARIO_ENDPOINTS.stockConsolidado
+            );
             if (!data.success || !data.data) {
                 return [];
             }

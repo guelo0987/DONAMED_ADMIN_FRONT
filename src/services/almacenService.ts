@@ -18,11 +18,25 @@ export interface Almacen {
     direccion?: string | null;
     telefono?: string | null;
     correo?: string | null;
+    estado?: string | null;
+    ciudad?: {
+        codigociudad: string;
+        nombre: string;
+        provincia?: { codigoprovincia: string; nombre: string };
+    } | null;
 }
 
-/**
- * Servicio de almacenes
- */
+export interface AlmacenDetalle extends Almacen {
+    almacen_medicamento?: Array<{
+        idalmacen: number;
+        codigolote: string;
+        codigomedicamento: string;
+        cantidad: number;
+        medicamento?: { codigomedicamento: string; nombre: string };
+        lote?: { codigolote: string; fechavencimiento?: string; fechafabricacion?: string };
+    }>;
+}
+
 export const almacenService = {
     async getAlmacenes(): Promise<Almacen[]> {
         try {
@@ -31,6 +45,20 @@ export const almacenService = {
             );
             if (!data.success || !data.data) {
                 throw new Error(data.error?.message ?? "Error al obtener almacenes");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    async getAlmacenById(id: number): Promise<AlmacenDetalle> {
+        try {
+            const { data } = await apiClient.get<ApiResponse<AlmacenDetalle>>(
+                ALMACEN_ENDPOINTS.almacenById(id)
+            );
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Almacén no encontrado");
             }
             return data.data;
         } catch (err) {
