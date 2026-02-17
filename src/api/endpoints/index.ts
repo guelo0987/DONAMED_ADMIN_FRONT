@@ -8,3 +8,5 @@ export { LOTE_ENDPOINTS } from "./loteEndpoints";
 export { DONACION_ENDPOINTS } from "./donacionEndpoints";
 export { MEDICAMENTO_ENDPOINTS } from "./medicamentoEndpoints";
 export { INVENTARIO_ENDPOINTS } from "./inventarioEndpoints";
+export { SOLICITUD_ENDPOINTS } from "./solicitudEndpoints";
+export { DESPACHO_ENDPOINTS } from "./despachoEndpoints";
