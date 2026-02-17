@@ -1,30 +1,34 @@
-interface WeeklyChartProps {
-    title: string;
+interface DayStat {
+    dia: string;
+    solicitudes: number;
+    medicamentos: number;
 }
 
-export function WeeklyChart({ title }: WeeklyChartProps) {
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    const yLabels = ["0", "5k", "10k", "15k", "20k", "25k"];
+interface WeeklyChartProps {
+    title: string;
+    data?: DayStat[];
+}
 
-    // Sample data for each day [value1, value2]
-    const data = [
-        [65, 50],
-        [80, 70],
-        [100, 85],
-        [70, 60],
-        [50, 45],
-        [75, 65],
-        [90, 75],
-    ];
+export function WeeklyChart({ title, data = [] }: WeeklyChartProps) {
+    const days = data.length > 0 ? data.map((d) => d.dia) : ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const chartData = data.length > 0
+        ? data.map((d) => [d.solicitudes, d.medicamentos])
+        : Array(7).fill([0, 0]);
 
-    const maxValue = 100;
+    const maxValue = Math.max(
+        ...chartData.flatMap((d: number[]) => d),
+        1
+    );
+
+    const ySteps = 5;
+    const yLabels = Array.from({ length: ySteps + 1 }, (_, i) =>
+        Math.round((maxValue / ySteps) * i)
+    );
 
     return (
         <div className="flex h-full flex-col">
-            {/* Title */}
             <h3 className="text-xl font-semibold text-[#2D3748]">{title}</h3>
 
-            {/* Chart Area */}
             <div className="relative mt-4 flex-1">
                 {/* Y-axis labels */}
                 <div className="absolute -left-2 top-0 flex h-[176px] flex-col-reverse justify-between text-right text-xs text-[#7B91B0]">
@@ -37,7 +41,7 @@ export function WeeklyChart({ title }: WeeklyChartProps) {
                 <div className="ml-10">
                     <svg viewBox="0 0 580 200" className="h-[200px] w-full">
                         {/* Horizontal grid lines */}
-                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                        {Array.from({ length: ySteps + 1 }).map((_, i) => (
                             <line
                                 key={i}
                                 x1="0"
@@ -49,28 +53,26 @@ export function WeeklyChart({ title }: WeeklyChartProps) {
                         ))}
 
                         {/* Bars */}
-                        {data.map((values, index) => {
+                        {chartData.map((values: number[], index: number) => {
                             const x = index * 80 + 30;
                             const height1 = (values[0] / maxValue) * 160;
                             const height2 = (values[1] / maxValue) * 160;
 
                             return (
                                 <g key={index}>
-                                    {/* Bar 1 - Solicitudes */}
                                     <rect
                                         x={x}
                                         y={176 - height1}
                                         width="14"
-                                        height={height1}
+                                        height={Math.max(height1, 0)}
                                         rx="2"
                                         fill="#34A4B3"
                                     />
-                                    {/* Bar 2 - Medicamentos */}
                                     <rect
                                         x={x + 16}
                                         y={176 - height2}
                                         width="14"
-                                        height={height2}
+                                        height={Math.max(height2, 0)}
                                         rx="2"
                                         fill="#40C9DB"
                                     />

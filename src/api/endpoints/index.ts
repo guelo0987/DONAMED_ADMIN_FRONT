@@ -10,3 +10,4 @@ export { MEDICAMENTO_ENDPOINTS } from "./medicamentoEndpoints";
 export { INVENTARIO_ENDPOINTS } from "./inventarioEndpoints";
 export { SOLICITUD_ENDPOINTS } from "./solicitudEndpoints";
 export { DESPACHO_ENDPOINTS } from "./despachoEndpoints";
+export { DASHBOARD_ENDPOINTS } from "./dashboardEndpoints";

@@ -1,19 +1,53 @@
-interface AreaChartProps {
-    title: string;
+interface MonthlyStat {
+    mes: string;
+    total: number;
 }
 
-export function AreaChart({ title }: AreaChartProps) {
-    // Sample data for multi-line area chart
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Sept", "Oct", "Nov", "Des"];
+interface AreaChartProps {
+    title: string;
+    donaciones?: MonthlyStat[];
+    usuarios?: MonthlyStat[];
+    solicitudes?: MonthlyStat[];
+}
 
-    const yLabels = [0, 100, 200, 300, 400];
+export function AreaChart({ title, donaciones = [], usuarios = [], solicitudes = [] }: AreaChartProps) {
+    const months = donaciones.length > 0
+        ? donaciones.map((d) => d.mes)
+        : ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    const allValues = [
+        ...donaciones.map((d) => d.total),
+        ...usuarios.map((u) => u.total),
+        ...solicitudes.map((s) => s.total),
+    ];
+    const maxValue = Math.max(...allValues, 1);
+
+    const chartW = 500;
+    const chartH = 164;
+    const paddingBottom = 16;
+
+    function toPath(data: MonthlyStat[]): string {
+        if (data.length === 0) return "";
+        const step = chartW / Math.max(data.length - 1, 1);
+        return data
+            .map((d, i) => {
+                const x = i * step;
+                const y = chartH - paddingBottom - (d.total / maxValue) * (chartH - paddingBottom);
+                return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+            })
+            .join(" ");
+    }
+
+    // Dynamic Y labels
+    const ySteps = 4;
+    const yLabels = Array.from({ length: ySteps + 1 }, (_, i) =>
+        Math.round((maxValue / ySteps) * i)
+    );
 
     return (
         <div className="flex h-full flex-col">
-            {/* Title */}
             <h3 className="text-xl font-semibold text-[#2D3748]">{title}</h3>
 
-            {/* Chart Area */}
             <div className="relative mt-4 flex-1">
                 {/* Y-axis labels */}
                 <div className="absolute -left-2 top-0 flex h-[164px] flex-col-reverse justify-between text-right text-xs text-[#7B91B0]/70">
@@ -22,55 +56,34 @@ export function AreaChart({ title }: AreaChartProps) {
                     ))}
                 </div>
 
-                {/* Chart SVG */}
                 <div className="ml-8">
-                    <svg viewBox="0 0 500 180" className="h-[180px] w-full">
+                    <svg viewBox={`0 0 ${chartW} ${chartH + paddingBottom}`} className="h-[180px] w-full">
                         {/* Grid lines */}
-                        {[0, 1, 2, 3, 4].map((i) => (
+                        {Array.from({ length: ySteps + 1 }).map((_, i) => (
                             <line
                                 key={i}
                                 x1="0"
-                                y1={i * 41}
-                                x2="500"
-                                y2={i * 41}
+                                y1={i * (chartH / ySteps)}
+                                x2={chartW}
+                                y2={i * (chartH / ySteps)}
                                 stroke="rgba(70, 78, 95, 0.04)"
                             />
                         ))}
 
-                        {/* Dashed vertical line */}
-                        <line
-                            x1="380"
-                            y1="0"
-                            x2="380"
-                            y2="164"
-                            stroke="#9D9D9D"
-                            strokeDasharray="4 4"
-                        />
-                        <circle cx="380" cy="50" r="7" fill="#9D9D9D" />
+                        {/* Donaciones */}
+                        {donaciones.length > 0 && (
+                            <path d={toPath(donaciones)} fill="none" stroke="#34A4B3" strokeWidth="3" />
+                        )}
 
-                        {/* Line 1 - Donaciones (teal) */}
-                        <path
-                            d="M 0 82 Q 50 70 100 75 T 200 60 T 300 72 T 400 45 T 500 50"
-                            fill="none"
-                            stroke="#34A4B3"
-                            strokeWidth="4"
-                        />
+                        {/* Usuarios */}
+                        {usuarios.length > 0 && (
+                            <path d={toPath(usuarios)} fill="none" stroke="#9D9D9D" strokeWidth="3" />
+                        )}
 
-                        {/* Line 2 - Usuarios (gray) */}
-                        <path
-                            d="M 0 100 Q 50 92 100 95 T 200 90 T 300 100 T 400 85 T 500 110"
-                            fill="none"
-                            stroke="#9D9D9D"
-                            strokeWidth="4"
-                        />
-
-                        {/* Line 3 - Número de solicitudes (cyan) */}
-                        <path
-                            d="M 0 40 Q 50 35 100 42 T 200 30 T 300 38 T 400 25 T 500 35"
-                            fill="none"
-                            stroke="#40C9DB"
-                            strokeWidth="4"
-                        />
+                        {/* Solicitudes */}
+                        {solicitudes.length > 0 && (
+                            <path d={toPath(solicitudes)} fill="none" stroke="#40C9DB" strokeWidth="3" />
+                        )}
                     </svg>
 
                     {/* X-axis labels */}
@@ -94,7 +107,7 @@ export function AreaChart({ title }: AreaChartProps) {
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-sm bg-donamed-secondary" />
-                    <span className="text-xs font-medium text-[#464E5F]">Número de solicitudes</span>
+                    <span className="text-xs font-medium text-[#464E5F]">Solicitudes</span>
                 </div>
             </div>
         </div>
