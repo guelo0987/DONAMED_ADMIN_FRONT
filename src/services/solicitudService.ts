@@ -81,7 +81,12 @@ export const solicitudService = {
 
     async updateSolicitudEstado(
         numerosolicitud: number,
-        payload: { estado: EstadoSolicitud; observaciones?: string }
+        payload: {
+            estado: EstadoSolicitud;
+            observaciones?: string;
+            /** ID del almacén de retiro (obligatorio al aprobar) */
+            solicitud_de_retiro?: number;
+        }
     ): Promise<Solicitud> {
         try {
             const { data } = await apiClient.patch<ApiResponse<Solicitud>>(
