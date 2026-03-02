@@ -249,17 +249,6 @@ export function CrearDespacho() {
                             <InfoField label="Centro médico" value={solicitud.centromedico} />
                             <InfoField label="Patología" value={solicitud.patologia} />
                             <InfoField label="Representante" value={solicitud.cedularepresentante} />
-                            {solicitud.almacen_retiro && (
-                                <>
-                                    <InfoField label="Almacén de retiro" value={solicitud.almacen_retiro.nombre} />
-                                    {solicitud.almacen_retiro.direccion && (
-                                        <InfoField label="Dirección retiro" value={solicitud.almacen_retiro.direccion} />
-                                    )}
-                                    {solicitud.almacen_retiro.ciudad?.nombre && (
-                                        <InfoField label="Ciudad retiro" value={solicitud.almacen_retiro.ciudad.nombre} />
-                                    )}
-                                </>
-                            )}
                         </div>
                     </CardContent>
                 </Card>

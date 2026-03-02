@@ -5,4 +5,5 @@
 export const MEDICAMENTO_ENDPOINTS = {
     medicamentos: "/admin/medicamentos",
     medicamentoById: (codigo: string) => `/admin/medicamentos/${encodeURIComponent(codigo)}`,
+    medicamentoFoto: (codigo: string) => `/admin/medicamentos/${encodeURIComponent(codigo)}/foto`,
 } as const;

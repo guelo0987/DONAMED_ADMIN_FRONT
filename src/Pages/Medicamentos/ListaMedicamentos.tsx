@@ -3,7 +3,7 @@ import { Search, Eye, ChevronDown, Plus, PencilLine, Trash2 } from "lucide-react
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { medicamentoService } from "@/services/medicamentoService";
+import { medicamentoService, getFotoPublicUrl } from "@/services/medicamentoService";
 import { useToast } from "@/contexts/ToastContext";
 import type { Medicamento } from "@/services/medicamentoService";
 
@@ -229,7 +229,8 @@ export function ListaMedicamentos() {
                     )}
 
                     <div className="w-full">
-                        <div className="grid grid-cols-[0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                        <div className="grid grid-cols-[0.6fr_0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                            <span>Foto</span>
                             <span>Código</span>
                             <span>Nombre</span>
                             <span>Compuesto principal</span>
@@ -252,8 +253,19 @@ export function ListaMedicamentos() {
                                 {filteredMedicamentos.map((med) => (
                                     <div
                                         key={med.codigomedicamento}
-                                        className="grid grid-cols-[0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
+                                        className="grid grid-cols-[0.6fr_0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
                                     >
+                                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-[#E7E7E7] bg-[#FBFBFC]">
+                                            {getFotoPublicUrl(med.foto_url) ? (
+                                                <img
+                                                    src={getFotoPublicUrl(med.foto_url)!}
+                                                    alt={med.nombre}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <span className="text-xs text-[#8B9096]">—</span>
+                                            )}
+                                        </div>
                                         <span className="font-medium">
                                             {med.codigomedicamento}
                                         </span>

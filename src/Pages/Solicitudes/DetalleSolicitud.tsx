@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { solicitudService } from "@/services/solicitudService";
 import { inventarioService, type InventarioItem } from "@/services/inventarioService";
-import { almacenService, type Almacen } from "@/services/almacenService";
 import { useToast } from "@/contexts/ToastContext";
 import type {
     Solicitud, EstadoSolicitud, MedicamentoSolicitado, DocumentoSolicitud,
@@ -117,10 +116,8 @@ export function DetalleSolicitud() {
     // Modal estado
     const [showEstadoModal, setShowEstadoModal] = useState(false);
     const [selectedEstado, setSelectedEstado] = useState<EstadoSolicitud | "">("");
-    const [selectedAlmacenRetiro, setSelectedAlmacenRetiro] = useState<number | "">("");
     const [observaciones, setObservaciones] = useState("");
     const [isUpdatingEstado, setIsUpdatingEstado] = useState(false);
-    const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
 
     // Asignar detalles (inventario)
     const [inventario, setInventario] = useState<InventarioItem[]>([]);
@@ -167,37 +164,18 @@ export function DetalleSolicitud() {
         }
     }, [solicitud?.estado]);
 
-    // Cargar almacenes cuando se abre el modal (para asignar almacén de retiro al aprobar)
-    useEffect(() => {
-        if (showEstadoModal) {
-            almacenService.getAlmacenes().then(setAlmacenes).catch(() => setAlmacenes([]));
-        }
-    }, [showEstadoModal]);
-
     const handleCambiarEstado = async () => {
         if (!solicitud || !selectedEstado) return;
-        if (selectedEstado === "APROBADA" && !selectedAlmacenRetiro) {
-            addToast({ variant: "error", title: "Error", message: "Al aprobar la solicitud debe asignar el almacén de retiro." });
-            return;
-        }
         setIsUpdatingEstado(true);
         try {
-            const payload: { estado: EstadoSolicitud; observaciones?: string; solicitud_de_retiro?: number } = {
-                estado: selectedEstado,
-                observaciones: observaciones.trim() || undefined,
-            };
-            if (selectedEstado === "APROBADA" && selectedAlmacenRetiro) {
-                payload.solicitud_de_retiro = selectedAlmacenRetiro;
-            }
             const updated = await solicitudService.updateSolicitudEstado(
                 solicitud.numerosolicitud,
-                payload
+                { estado: selectedEstado, observaciones: observaciones.trim() || undefined }
             );
             setSolicitud(updated);
             setMedicamentosSolicitados(updated.medicamento_solicitado ?? medicamentosSolicitados);
             setShowEstadoModal(false);
             setSelectedEstado("");
-            setSelectedAlmacenRetiro("");
             setObservaciones("");
             addToast({ variant: "success", title: "Estado actualizado", message: `La solicitud pasó a ${estadoLabels[selectedEstado]}.` });
         } catch (err) {
@@ -332,12 +310,7 @@ export function DetalleSolicitud() {
                 <div className="flex flex-wrap items-center gap-3">
                     <Button
                         type="button"
-                        onClick={() => {
-                            setShowEstadoModal(true);
-                            setSelectedEstado(solicitud.estado === "APROBADA" ? "APROBADA" : "");
-                            setSelectedAlmacenRetiro(solicitud.almacen_retiro?.idalmacen ?? "");
-                            setObservaciones("");
-                        }}
+                        onClick={() => { setShowEstadoModal(true); setSelectedEstado(""); setObservaciones(""); }}
                         className="h-10 rounded-xl border-2 border-[#34A4B3] bg-[#F3F3F3] px-5 text-sm font-semibold text-[#34A4B3] hover:bg-[#EDEDED]"
                         variant="outline"
                     >
@@ -389,55 +362,6 @@ export function DetalleSolicitud() {
                     </div>
                 </CardContent>
             </Card>
-
-            {/* Almacén de retiro (cuando está aprobada: mostrar asignado o opción de agregar/modificar) */}
-            {solicitud.estado === "APROBADA" && (
-                <Card className="overflow-hidden border-[#EEF1F4]">
-                    <CardContent className="p-6">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h2 className="text-base font-semibold text-[#1E1E1E]">Almacén de retiro</h2>
-                                <p className="mt-1 text-sm text-[#5B5B5B]/70">
-                                    {solicitud.almacen_retiro
-                                        ? "El cliente retirará los medicamentos en este almacén."
-                                        : "Asigna el almacén donde el cliente retirará los medicamentos."}
-                                </p>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-9 rounded-lg border-donamed-primary/50 text-donamed-primary hover:bg-donamed-light/50"
-                                onClick={() => {
-                                    setShowEstadoModal(true);
-                                    setSelectedEstado("APROBADA");
-                                    setSelectedAlmacenRetiro(solicitud.almacen_retiro?.idalmacen ?? "");
-                                    setObservaciones("");
-                                }}
-                            >
-                                {solicitud.almacen_retiro ? "Modificar almacén" : "Agregar almacén"}
-                            </Button>
-                        </div>
-                        {solicitud.almacen_retiro && (
-                        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <InfoField label="Almacén" value={solicitud.almacen_retiro.nombre} />
-                            {solicitud.almacen_retiro.direccion && (
-                                <InfoField label="Dirección" value={solicitud.almacen_retiro.direccion} />
-                            )}
-                            {solicitud.almacen_retiro.telefono && (
-                                <InfoField label="Teléfono" value={solicitud.almacen_retiro.telefono} />
-                            )}
-                            {solicitud.almacen_retiro.correo && (
-                                <InfoField label="Correo" value={solicitud.almacen_retiro.correo} />
-                            )}
-                            {solicitud.almacen_retiro.ciudad?.nombre && (
-                                <InfoField label="Ciudad" value={solicitud.almacen_retiro.ciudad.nombre} />
-                            )}
-                        </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
 
             {/* Documentos */}
             <Card className="overflow-hidden border-[#EEF1F4]">
@@ -833,32 +757,6 @@ export function DetalleSolicitud() {
                             )}
                         </div>
 
-                        {(selectedEstado === "APROBADA" || solicitud.estado === "APROBADA") && (
-                            <div className="mt-4 flex flex-col gap-2">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                    Almacén de retiro <span className="text-danger">*</span>
-                                </span>
-                                <select
-                                    value={selectedAlmacenRetiro}
-                                    onChange={(e) => setSelectedAlmacenRetiro(e.target.value ? parseInt(e.target.value, 10) : "")}
-                                    className="h-11 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                >
-                                    <option value="">Seleccionar almacén...</option>
-                                    {almacenes.map((a) => (
-                                        <option key={a.idalmacen} value={a.idalmacen}>
-                                            {a.nombre}
-                                            {a.ciudad?.nombre ? ` — ${a.ciudad.nombre}` : ""}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-[#8B9096]">
-                                    {solicitud.estado === "APROBADA"
-                                        ? "Modifica o asigna el almacén donde el cliente retirará los medicamentos."
-                                        : "El cliente retirará los medicamentos en este almacén."}
-                                </p>
-                            </div>
-                        )}
-
                         <div className="mt-4 flex flex-col gap-2">
                             <span className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">Observaciones (opcional)</span>
                             <textarea
@@ -881,11 +779,7 @@ export function DetalleSolicitud() {
                             <Button
                                 className="rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
                                 onClick={handleCambiarEstado}
-                                disabled={
-                                    isUpdatingEstado ||
-                                    !selectedEstado ||
-                                    ((selectedEstado === "APROBADA" || solicitud.estado === "APROBADA") && !selectedAlmacenRetiro)
-                                }
+                                disabled={isUpdatingEstado || !selectedEstado}
                             >
                                 {isUpdatingEstado ? "Actualizando..." : "Confirmar cambio"}
                             </Button>

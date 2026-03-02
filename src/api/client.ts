@@ -28,11 +28,17 @@ export function clearStoredToken(): void {
     localStorage.removeItem(TOKEN_KEY);
 }
 
-// Interceptor: agregar token a las peticiones
+// Interceptor: agregar token y manejar FormData (subida de archivos)
 apiClient.interceptors.request.use((config) => {
     const token = getStoredToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Para FormData (multipart/form-data) no debe enviarse Content-Type:
+    // el navegador lo establece automáticamente con el boundary correcto.
+    // Si se envía application/json, multer no parsea el archivo.
+    if (config.data instanceof FormData) {
+        delete config.headers["Content-Type"];
     }
     return config;
 });

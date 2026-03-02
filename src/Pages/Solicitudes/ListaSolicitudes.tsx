@@ -418,14 +418,13 @@ export function ListaSolicitudes() {
 
                     {/* Tabla */}
                     <div className="w-full overflow-x-auto">
-                        <div className="min-w-[1000px]">
-                            <div className="grid grid-cols-[0.5fr_1.2fr_0.9fr_0.9fr_0.9fr_0.9fr_0.7fr_0.6fr_0.6fr] gap-3 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                        <div className="min-w-[900px]">
+                            <div className="grid grid-cols-[0.5fr_1.3fr_1fr_1fr_1fr_0.8fr_0.7fr_0.6fr] gap-3 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                 <span>N°</span>
                                 <span>Solicitante / Centro</span>
                                 <span>Patología</span>
                                 <span>Medicamentos</span>
                                 <span>Tipo</span>
-                                <span>Almacén retiro</span>
                                 <span>Fecha</span>
                                 <span>Estado</span>
                                 <span>Acciones</span>
@@ -440,7 +439,7 @@ export function ListaSolicitudes() {
                                     {paginatedData.map((solicitud) => (
                                         <div
                                             key={solicitud.numerosolicitud}
-                                            className="grid grid-cols-[0.5fr_1.2fr_0.9fr_0.9fr_0.9fr_0.9fr_0.7fr_0.6fr_0.6fr] gap-3 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
+                                            className="grid grid-cols-[0.5fr_1.3fr_1fr_1fr_1fr_0.8fr_0.7fr_0.6fr] gap-3 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
                                         >
                                             <div className="flex items-center gap-2">
                                                 <span className="h-2 w-2 shrink-0 rounded-full bg-donamed-primary" />
@@ -470,16 +469,6 @@ export function ListaSolicitudes() {
                                             <span className="truncate text-xs">
                                                 {solicitud.tipo_solicitud?.descripcion ?? solicitud.codigotiposolicitud}
                                             </span>
-                                            <div className="flex flex-col min-w-0" title={solicitud.almacen_retiro ? `${solicitud.almacen_retiro.nombre}${solicitud.almacen_retiro.ciudad?.nombre ? ` — ${solicitud.almacen_retiro.ciudad.nombre}` : ""}` : undefined}>
-                                                <span className="truncate text-xs">
-                                                    {solicitud.almacen_retiro?.nombre ?? "—"}
-                                                </span>
-                                                {solicitud.almacen_retiro?.ciudad?.nombre && (
-                                                    <span className="truncate text-[10px] text-[#8B9096]">
-                                                        {solicitud.almacen_retiro.ciudad.nombre}
-                                                    </span>
-                                                )}
-                                            </div>
                                             <span className="text-xs">{formatDate(solicitud.creada_en)}</span>
                                             <span className={`w-fit self-center rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none ${statusStyles[solicitud.estado]}`}>
                                                 {estadoLabels[solicitud.estado]}

@@ -47,10 +47,22 @@ export interface Medicamento {
     categoria_medicamento?: { idcategoria: number; categoria?: { nombre: string } }[];
     enfermedad_medicamento?: { idenfermedad: number; enfermedad?: { nombre: string } }[];
     cantidad_disponible_global?: number | null;
+    /** Ruta relativa de la foto en Supabase Storage (ej: MEDICAMENTOS/med_MED001_123.jpg) */
+    foto_url?: string | null;
     /** Lotes con almacen_medicamento (getMedicamentoById) */
     lote?: LoteConAlmacen[];
     creado_en?: string | null;
     actualizado_en?: string | null;
+}
+
+/** Construye la URL pública de una foto a partir de la ruta relativa */
+const SUPABASE_STORAGE_URL = import.meta.env.VITE_SUPABASE_STORAGE_URL || "";
+
+export function getFotoPublicUrl(fotoUrl: string | null | undefined): string {
+    if (!fotoUrl || !SUPABASE_STORAGE_URL) return "";
+    const base = SUPABASE_STORAGE_URL.replace(/\/$/, "");
+    const path = fotoUrl.startsWith("/") ? fotoUrl.slice(1) : fotoUrl;
+    return `${base}/${path}`;
 }
 
 /** Aplana lote[] -> stock por almacén para la UI */
@@ -164,6 +176,37 @@ export const medicamentoService = {
             );
             if (!data.success) {
                 throw new Error(data.error?.message ?? "Error al eliminar medicamento");
+            }
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    /** Sube o reemplaza la foto de un medicamento (multipart/form-data, campo "foto") */
+    async uploadFoto(codigo: string, file: File): Promise<{ foto_url: string; foto_url_publica: string; medicamento: Medicamento }> {
+        try {
+            const formData = new FormData();
+            formData.append("foto", file);
+
+            const { data } = await apiClient.post<
+                ApiResponse<{ foto_url: string; foto_url_publica: string; medicamento: Medicamento }>
+            >(MEDICAMENTO_ENDPOINTS.medicamentoFoto(codigo), formData);
+
+            if (!data.success || !data.data) {
+                throw new Error(data.error?.message ?? "Error al subir foto");
+            }
+            return data.data;
+        } catch (err) {
+            throw new Error(getErrorMessage(err));
+        }
+    },
+
+    /** Elimina la foto de un medicamento */
+    async deleteFoto(codigo: string): Promise<void> {
+        try {
+            const { data } = await apiClient.delete<ApiResponse>(MEDICAMENTO_ENDPOINTS.medicamentoFoto(codigo));
+            if (!data.success) {
+                throw new Error(data.error?.message ?? "Error al eliminar foto");
             }
         } catch (err) {
             throw new Error(getErrorMessage(err));

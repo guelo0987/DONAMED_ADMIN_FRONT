@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
     medicamentoService,
     flattenStockFromLotes,
+    getFotoPublicUrl,
 } from "@/services/medicamentoService";
 import type { Medicamento, StockPorAlmacen } from "@/services/medicamentoService";
 
@@ -150,14 +151,25 @@ export function DetalleMedicamento() {
 
             <Card className="overflow-hidden border-[#EEF1F4]">
                 <CardContent className="p-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                                Código de medicamento
-                            </p>
-                            <p className="mt-1 text-lg font-semibold text-[#1E1E1E]">
-                                {medicamento.codigomedicamento}
-                            </p>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                            {getFotoPublicUrl(medicamento.foto_url) && (
+                                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E7E7E7] bg-[#FBFBFC]">
+                                    <img
+                                        src={getFotoPublicUrl(medicamento.foto_url)!}
+                                        alt={medicamento.nombre}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Código de medicamento
+                                </p>
+                                <p className="mt-1 text-lg font-semibold text-[#1E1E1E]">
+                                    {medicamento.codigomedicamento}
+                                </p>
+                            </div>
                         </div>
                         <span
                             className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[estado]}`}

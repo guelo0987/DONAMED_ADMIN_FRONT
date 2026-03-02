@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { medicamentoService } from "@/services/medicamentoService";
+import { medicamentoService, getFotoPublicUrl } from "@/services/medicamentoService";
 import { catalogoService } from "@/services/catalogoService";
 import { useToast } from "@/contexts/ToastContext";
 import type { FormaFarmaceutica, ViaAdministracion, Categoria, Enfermedad } from "@/types/catalogo.types";
+
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/gif,image/webp";
+const MAX_FILE_SIZE_MB = 5;
 
 export function EditarMedicamento() {
     const { addToast } = useToast();
     const navigate = useNavigate();
     const { id } = useParams();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [nombre, setNombre] = useState("");
     const [descripcion, setDescripcion] = useState("");
     const [compuesto_principal, setCompuesto_principal] = useState("");
@@ -19,6 +23,9 @@ export function EditarMedicamento() {
     const [categorias, setCategorias] = useState<number[]>([]);
     const [enfermedades, setEnfermedades] = useState<number[]>([]);
     const [estado, setEstado] = useState<"ACTIVO" | "INACTIVO">("ACTIVO");
+    const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+    const [fotoFile, setFotoFile] = useState<File | null>(null);
+    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
     const [formasFarmaceuticas, setFormasFarmaceuticas] = useState<FormaFarmaceutica[]>([]);
     const [viasAdministracion, setViasAdministracion] = useState<ViaAdministracion[]>([]);
     const [categoriasList, setCategoriasList] = useState<Categoria[]>([]);
@@ -26,6 +33,7 @@ export function EditarMedicamento() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeletingFoto, setIsDeletingFoto] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -40,6 +48,7 @@ export function EditarMedicamento() {
                 setCategorias(m.categoria_medicamento?.map((c) => c.idcategoria) ?? []);
                 setEnfermedades(m.enfermedad_medicamento?.map((e) => e.idenfermedad) ?? []);
                 setEstado(m.estado === "INACTIVO" ? "INACTIVO" : "ACTIVO");
+                setFotoUrl(m.foto_url ?? null);
             })
             .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar"))
             .finally(() => setIsLoading(false));
@@ -59,6 +68,35 @@ export function EditarMedicamento() {
         });
     }, []);
 
+    const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+            addToast({ variant: "error", title: "Archivo muy grande", message: `Máximo ${MAX_FILE_SIZE_MB}MB.` });
+            return;
+        }
+        setFotoFile(file);
+        const reader = new FileReader();
+        reader.onload = () => setFotoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleDeleteFoto = async () => {
+        if (!id) return;
+        setIsDeletingFoto(true);
+        try {
+            await medicamentoService.deleteFoto(id);
+            setFotoUrl(null);
+            setFotoFile(null);
+            setFotoPreview(null);
+            addToast({ variant: "success", title: "Foto eliminada", message: "La foto del medicamento fue eliminada." });
+        } catch (err) {
+            addToast({ variant: "error", title: "Error", message: err instanceof Error ? err.message : "Error al eliminar foto" });
+        } finally {
+            setIsDeletingFoto(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
@@ -75,6 +113,9 @@ export function EditarMedicamento() {
                 enfermedades,
                 estado,
             });
+            if (fotoFile) {
+                await medicamentoService.uploadFoto(id, fotoFile);
+            }
             addToast({ variant: "success", title: "Medicamento actualizado", message: `${nombre.trim()} fue actualizado correctamente.` });
             navigate(`/medicamentos/${id}`);
         } catch (err) {
@@ -140,6 +181,65 @@ export function EditarMedicamento() {
                             Código: <span className="font-semibold text-[#2D3748]">{id}</span> (no editable)
                         </div>
                         <div className="grid gap-4 md:grid-cols-2">
+                            <div className="flex flex-col gap-2 text-sm md:col-span-2">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Foto del medicamento
+                                </label>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept={ACCEPTED_IMAGE_TYPES}
+                                        onChange={handleFotoChange}
+                                        className="hidden"
+                                    />
+                                    {(fotoPreview || getFotoPublicUrl(fotoUrl)) && (
+                                        <div className="h-20 w-20 overflow-hidden rounded-lg border border-[#E7E7E7] bg-[#FBFBFC]">
+                                            <img
+                                                src={fotoPreview ?? getFotoPublicUrl(fotoUrl) ?? ""}
+                                                alt="Foto"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-10 rounded-lg"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {fotoFile || fotoUrl ? "Cambiar imagen" : "Subir imagen"}
+                                        </Button>
+                                        {fotoFile && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className="h-10 text-[#5B5B5B] hover:bg-gray-100"
+                                                onClick={() => {
+                                                    setFotoFile(null);
+                                                    setFotoPreview(null);
+                                                    fileInputRef.current?.value && (fileInputRef.current.value = "");
+                                                }}
+                                            >
+                                                Quitar selección
+                                            </Button>
+                                        )}
+                                        {fotoUrl && !fotoFile && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className="h-10 text-danger hover:bg-danger/10"
+                                                disabled={isDeletingFoto}
+                                                onClick={handleDeleteFoto}
+                                            >
+                                                {isDeletingFoto ? "Eliminando..." : "Eliminar foto"}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <p className="text-xs text-[#8B9096]">JPEG, PNG, GIF o WebP. Máximo {MAX_FILE_SIZE_MB}MB.</p>
+                            </div>
                             <div className="flex flex-col gap-2 text-sm md:col-span-2">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                     Nombre *

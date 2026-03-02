@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,13 @@ import { catalogoService } from "@/services/catalogoService";
 import { useToast } from "@/contexts/ToastContext";
 import type { FormaFarmaceutica, ViaAdministracion, Categoria, Enfermedad } from "@/types/catalogo.types";
 
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/gif,image/webp";
+const MAX_FILE_SIZE_MB = 5;
+
 export function RegistrarMedicamento() {
     const { addToast } = useToast();
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [codigomedicamento, setCodigomedicamento] = useState("");
     const [nombre, setNombre] = useState("");
     const [descripcion, setDescripcion] = useState("");
@@ -18,6 +22,8 @@ export function RegistrarMedicamento() {
     const [idvia_administracion, setIdvia_administracion] = useState<number>(0);
     const [categorias, setCategorias] = useState<number[]>([]);
     const [enfermedades, setEnfermedades] = useState<number[]>([]);
+    const [fotoFile, setFotoFile] = useState<File | null>(null);
+    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
     const [formasFarmaceuticas, setFormasFarmaceuticas] = useState<FormaFarmaceutica[]>([]);
     const [viasAdministracion, setViasAdministracion] = useState<ViaAdministracion[]>([]);
     const [categoriasList, setCategoriasList] = useState<Categoria[]>([]);
@@ -41,12 +47,25 @@ export function RegistrarMedicamento() {
         });
     }, []);
 
+    const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+            addToast({ variant: "error", title: "Archivo muy grande", message: `Máximo ${MAX_FILE_SIZE_MB}MB. El archivo tiene ${(file.size / 1024 / 1024).toFixed(2)}MB.` });
+            return;
+        }
+        setFotoFile(file);
+        const reader = new FileReader();
+        reader.onload = () => setFotoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
         try {
-            await medicamentoService.createMedicamento({
+            const created = await medicamentoService.createMedicamento({
                 codigomedicamento: codigomedicamento.trim(),
                 nombre: nombre.trim(),
                 descripcion: descripcion.trim() || undefined,
@@ -56,6 +75,9 @@ export function RegistrarMedicamento() {
                 categorias: categorias.length ? categorias : undefined,
                 enfermedades: enfermedades.length ? enfermedades : undefined,
             });
+            if (fotoFile) {
+                await medicamentoService.uploadFoto(created.codigomedicamento, fotoFile);
+            }
             addToast({ variant: "success", title: "Medicamento registrado", message: `${nombre.trim()} fue creado correctamente.` });
             navigate("/medicamentos");
         } catch (err) {
@@ -238,6 +260,50 @@ export function RegistrarMedicamento() {
                                     rows={3}
                                     className="rounded-lg border border-[#E7E7E7] px-3 py-2 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                 />
+                            </div>
+                            <div className="flex flex-col gap-2 text-sm md:col-span-2">
+                                <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    Foto del medicamento
+                                </label>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept={ACCEPTED_IMAGE_TYPES}
+                                        onChange={handleFotoChange}
+                                        className="hidden"
+                                    />
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-10 rounded-lg"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {fotoFile ? "Cambiar imagen" : "Seleccionar imagen"}
+                                        </Button>
+                                        {fotoFile && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className="h-10 text-danger hover:bg-danger/10"
+                                                onClick={() => {
+                                                    setFotoFile(null);
+                                                    setFotoPreview(null);
+                                                    fileInputRef.current?.value && (fileInputRef.current.value = "");
+                                                }}
+                                            >
+                                                Quitar
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {fotoPreview && (
+                                        <div className="h-20 w-20 overflow-hidden rounded-lg border border-[#E7E7E7] bg-[#FBFBFC]">
+                                            <img src={fotoPreview} alt="Vista previa" className="h-full w-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-[#8B9096]">JPEG, PNG, GIF o WebP. Máximo {MAX_FILE_SIZE_MB}MB.</p>
                             </div>
                         </div>
                     </CardContent>
