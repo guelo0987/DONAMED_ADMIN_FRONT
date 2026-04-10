@@ -53,7 +53,7 @@ export const solicitudService = {
             }
             return {
                 data: data.data ?? [],
-                pagination: (data as any).pagination ?? {
+                pagination: data.pagination ?? {
                     total: (data.data ?? []).length,
                     page: params?.page ?? 1,
                     limit: params?.limit ?? 20,
@@ -81,7 +81,11 @@ export const solicitudService = {
 
     async updateSolicitudEstado(
         numerosolicitud: number,
-        payload: { estado: EstadoSolicitud; observaciones?: string }
+        payload: {
+            estado: EstadoSolicitud;
+            observaciones?: string;
+            idalmacen_retiro?: number;
+        }
     ): Promise<Solicitud> {
         try {
             const { data } = await apiClient.patch<ApiResponse<Solicitud>>(

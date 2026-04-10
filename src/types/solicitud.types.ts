@@ -80,6 +80,18 @@ export interface DespachoSolicitud {
     persona?: PersonaSolicitud;
 }
 
+export interface AlmacenRetiro {
+    idalmacen: number;
+    nombre: string;
+    direccion?: string | null;
+    telefono?: string | null;
+    correo?: string | null;
+    ciudad?: {
+        codigociudad: string;
+        nombre: string;
+    } | null;
+}
+
 export interface DocumentoSolicitud {
     nombre?: string;
     url?: string;
@@ -106,4 +118,5 @@ export interface Solicitud {
     medicamento_solicitado?: MedicamentoSolicitado[];
     detalle_solicitud?: DetalleSolicitudItem[];
     despacho_despacho_solicitudTosolicitud?: DespachoSolicitud | null;
+    almacen_retiro?: AlmacenRetiro | null;
 }
