@@ -58,10 +58,15 @@ export interface Medicamento {
 /** Construye la URL pública de una foto a partir de la ruta relativa */
 const SUPABASE_STORAGE_URL = import.meta.env.VITE_SUPABASE_STORAGE_URL || "";
 
+/** URL pública de un objeto en Supabase Storage (ruta relativa al bucket o URL absoluta). */
 export function getFotoPublicUrl(fotoUrl: string | null | undefined): string {
-    if (!fotoUrl || !SUPABASE_STORAGE_URL) return "";
+    if (!fotoUrl) return "";
+    const trimmed = fotoUrl.trim();
+    if (!trimmed) return "";
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (!SUPABASE_STORAGE_URL) return "";
     const base = SUPABASE_STORAGE_URL.replace(/\/$/, "");
-    const path = fotoUrl.startsWith("/") ? fotoUrl.slice(1) : fotoUrl;
+    const path = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
     return `${base}/${path}`;
 }
 

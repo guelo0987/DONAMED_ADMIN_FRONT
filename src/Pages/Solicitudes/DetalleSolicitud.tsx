@@ -6,6 +6,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { solicitudService } from "@/services/solicitudService";
+import { getFotoPublicUrl } from "@/services/medicamentoService";
 import { inventarioService, type InventarioItem } from "@/services/inventarioService";
 import { useToast } from "@/contexts/ToastContext";
 import type {
@@ -137,6 +138,7 @@ export function DetalleSolicitud() {
             const data = await solicitudService.getSolicitudById(numSolicitud);
             setSolicitud(data);
             setMedicamentosSolicitados(data.medicamento_solicitado ?? []);
+            
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al cargar solicitud");
         } finally {
@@ -379,7 +381,9 @@ export function DetalleSolicitud() {
                         </div>
                     ) : (
                         <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {documentos.map((doc, i) => (
+                            {documentos.map((doc, i) => {
+                                const docHref = doc.url ? getFotoPublicUrl(doc.url) : "";
+                                return (
                                 <div
                                     key={i}
                                     className="flex items-center gap-3 rounded-xl border border-[#E7E7E7] bg-[#FBFBFC] px-4 py-3 transition hover:border-donamed-primary/30 hover:shadow-sm"
@@ -393,10 +397,10 @@ export function DetalleSolicitud() {
                                             <p className="truncate text-xs text-[#8B9096]">{doc.tipo}</p>
                                         )}
                                     </div>
-                                    {doc.url && (
+                                    {docHref && (
                                         <div className="flex items-center gap-1">
                                             <a
-                                                href={doc.url}
+                                                href={docHref}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[#5B5B5B] transition hover:bg-donamed-light hover:text-donamed-dark"
@@ -405,7 +409,7 @@ export function DetalleSolicitud() {
                                                 <ExternalLink className="h-4 w-4" />
                                             </a>
                                             <a
-                                                href={doc.url}
+                                                href={docHref}
                                                 download={doc.nombre}
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[#5B5B5B] transition hover:bg-donamed-light hover:text-donamed-dark"
                                                 title="Descargar"
@@ -415,7 +419,8 @@ export function DetalleSolicitud() {
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </CardContent>
