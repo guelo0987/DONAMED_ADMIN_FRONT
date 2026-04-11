@@ -19,6 +19,9 @@ const estadoLabels: Record<EstadoMedicamento, string> = {
     INACTIVO: "Inactivo",
 };
 
+const medicamentosTableGrid =
+    "grid-cols-[72px_130px_minmax(220px,1.8fr)_minmax(210px,1.4fr)_140px_140px_90px_120px_170px]";
+
 export function ListaMedicamentos() {
     const { addToast } = useToast();
     const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
@@ -149,8 +152,8 @@ export function ListaMedicamentos() {
                                     className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
                                 />
                             </button>
-                            <div className="flex items-center gap-2">
-                                <div className="group flex h-11 w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                                <div className="group flex h-11 w-full sm:w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
                                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-donamed-light text-donamed-dark transition group-focus-within:bg-donamed-primary group-focus-within:text-white">
                                         <Search className="h-4 w-4" />
                                     </div>
@@ -170,7 +173,7 @@ export function ListaMedicamentos() {
                                 <Button
                                     type="button"
                                     onClick={handleSearch}
-                                    className="h-11 rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark"
+                                    className="h-11 w-full rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark sm:w-auto"
                                 >
                                     Buscar
                                 </Button>
@@ -228,118 +231,134 @@ export function ListaMedicamentos() {
                         </div>
                     )}
 
-                    <div className="w-full">
-                        <div className="grid grid-cols-[0.6fr_0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            <span>Foto</span>
-                            <span>Código</span>
-                            <span>Nombre</span>
-                            <span>Compuesto principal</span>
-                            <span>Forma</span>
-                            <span>Vía</span>
-                            <span>Stock</span>
-                            <span>Estado</span>
-                            <span>Acciones</span>
-                        </div>
-
-                        {isLoading ? (
-                            <div className="py-16 text-center">
-                                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
-                                <p className="mt-3 text-sm text-[#5B5B5B]">
-                                    Cargando medicamentos...
-                                </p>
+                    <div className="overflow-x-auto px-4 py-2 sm:px-6">
+                        <div className="mx-auto min-w-[1292px]">
+                            <div
+                                className={`grid ${medicamentosTableGrid} items-center gap-4 rounded-t-2xl border-b border-[#EEF1F4] bg-white px-5 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]`}
+                            >
+                                <span className="text-center">Foto</span>
+                                <span>Código</span>
+                                <span>Nombre</span>
+                                <span>Compuesto principal</span>
+                                <span>Forma</span>
+                                <span>Vía</span>
+                                <span className="text-center">Stock</span>
+                                <span className="text-center">Estado</span>
+                                <span className="text-center">Acciones</span>
                             </div>
-                        ) : (
-                            <>
-                                {filteredMedicamentos.map((med) => (
-                                    <div
-                                        key={med.codigomedicamento}
-                                        className="grid grid-cols-[0.6fr_0.9fr_1.5fr_1.2fr_0.9fr_0.9fr_0.8fr_0.9fr_0.9fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
-                                    >
-                                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-[#E7E7E7] bg-[#FBFBFC]">
-                                            {getFotoPublicUrl(med.foto_url) ? (
-                                                <img
-                                                    src={getFotoPublicUrl(med.foto_url)!}
-                                                    alt={med.nombre}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            ) : (
-                                                <span className="text-xs text-[#8B9096]">—</span>
-                                            )}
-                                        </div>
-                                        <span className="font-medium">
-                                            {med.codigomedicamento}
-                                        </span>
-                                        <span className="font-medium">
-                                            {med.nombre}
-                                        </span>
-                                        <span
-                                            className="truncate"
-                                            title={
-                                                med.compuesto_principal ?? ""
-                                            }
-                                        >
-                                            {med.compuesto_principal ?? "—"}
-                                        </span>
-                                        <span>{formaNombre(med)}</span>
-                                        <span>{viaNombre(med)}</span>
-                                        <span
-                                            className={
-                                                typeof stockDisplay(med) ===
-                                                    "number" &&
-                                                (stockDisplay(med) as number) < 100
-                                                    ? "font-semibold text-warning"
-                                                    : ""
-                                            }
-                                        >
-                                            {stockDisplay(med)}
-                                        </span>
-                                        <span
-                                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[estadoDisplay(med)]}`}
-                                        >
-                                            {estadoLabels[estadoDisplay(med)]}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                            <Link
-                                                to={`/medicamentos/${encodeURIComponent(med.codigomedicamento)}`}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
-                                                title="Ver detalle"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
-                                            <Link
-                                                to={`/medicamentos/${encodeURIComponent(med.codigomedicamento)}/editar`}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
-                                                title="Editar"
-                                            >
-                                                <PencilLine className="h-4 w-4" />
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setEliminarTarget(med)
-                                                }
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                            <Link
-                                                to={`/inventario/medicamento/${encodeURIComponent(med.codigomedicamento)}`}
-                                                className="inline-flex h-9 items-center justify-center rounded-xl border-2 border-donamed-primary bg-white px-3 text-xs font-semibold text-donamed-primary transition hover:bg-[#F7F7F7]"
-                                            >
-                                                Inventario
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
 
-                                {filteredMedicamentos.length === 0 && (
-                                    <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
-                                        No se encontraron medicamentos
-                                    </div>
-                                )}
-                            </>
-                        )}
+                            {isLoading ? (
+                                <div className="py-16 text-center">
+                                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                                    <p className="mt-3 text-sm text-[#5B5B5B]">
+                                        Cargando medicamentos...
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    {filteredMedicamentos.map((med) => (
+                                        <div
+                                            key={med.codigomedicamento}
+                                            className={`grid ${medicamentosTableGrid} items-center gap-4 border-b border-[#EEF1F4] px-5 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]`}
+                                        >
+                                            <div className="flex justify-center">
+                                                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg border border-[#E7E7E7] bg-[#FBFBFC]">
+                                                    {getFotoPublicUrl(med.foto_url) ? (
+                                                        <img
+                                                            src={getFotoPublicUrl(med.foto_url)!}
+                                                            alt={med.nombre}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-xs text-[#8B9096]">—</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="font-medium whitespace-nowrap">
+                                                {med.codigomedicamento}
+                                            </span>
+                                            <span
+                                                className="min-w-0 font-medium leading-5"
+                                                title={med.nombre}
+                                            >
+                                                {med.nombre}
+                                            </span>
+                                            <span
+                                                className="min-w-0 truncate"
+                                                title={med.compuesto_principal ?? ""}
+                                            >
+                                                {med.compuesto_principal ?? "—"}
+                                            </span>
+                                            <span
+                                                className="min-w-0 truncate"
+                                                title={formaNombre(med)}
+                                            >
+                                                {formaNombre(med)}
+                                            </span>
+                                            <span
+                                                className="min-w-0 truncate"
+                                                title={viaNombre(med)}
+                                            >
+                                                {viaNombre(med)}
+                                            </span>
+                                            <span
+                                                className={`text-center font-medium whitespace-nowrap ${
+                                                    typeof stockDisplay(med) === "number" &&
+                                                    (stockDisplay(med) as number) < 100
+                                                        ? "text-warning"
+                                                        : ""
+                                                }`}
+                                            >
+                                                {stockDisplay(med)}
+                                            </span>
+                                            <div className="flex justify-center">
+                                                <span
+                                                    className={`w-fit rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${statusStyles[estadoDisplay(med)]}`}
+                                                >
+                                                    {estadoLabels[estadoDisplay(med)]}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Link
+                                                    to={`/medicamentos/${encodeURIComponent(med.codigomedicamento)}`}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                    title="Ver detalle"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    to={`/medicamentos/${encodeURIComponent(med.codigomedicamento)}/editar`}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                    title="Editar"
+                                                >
+                                                    <PencilLine className="h-4 w-4" />
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEliminarTarget(med)}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                                <Link
+                                                    to={`/inventario/medicamento/${encodeURIComponent(med.codigomedicamento)}`}
+                                                    className="inline-flex h-9 items-center justify-center rounded-xl border-2 border-donamed-primary bg-white px-3 text-xs font-semibold text-donamed-primary whitespace-nowrap transition hover:bg-[#F7F7F7]"
+                                                >
+                                                    Inventario
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {filteredMedicamentos.length === 0 && (
+                                        <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
+                                            No se encontraron medicamentos
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

@@ -101,8 +101,8 @@ export function ListaPersonas() {
                                     className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
                                 />
                             </button>
-                            <div className="flex items-center gap-2">
-                                <div className="group flex h-11 w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                                <div className="group flex h-11 w-full sm:w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
                                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-donamed-light text-donamed-dark transition group-focus-within:bg-donamed-primary group-focus-within:text-white">
                                         <Search className="h-4 w-4" />
                                     </div>
@@ -118,7 +118,7 @@ export function ListaPersonas() {
                                 <Button
                                     type="button"
                                     onClick={handleSearch}
-                                    className="h-11 rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark"
+                                    className="h-11 w-full rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark sm:w-auto"
                                 >
                                     Buscar
                                 </Button>

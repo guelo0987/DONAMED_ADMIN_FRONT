@@ -26,7 +26,7 @@ interface ToastProps extends ToastType {
     onClose: () => void;
 }
 
-export function Toast({ id: _id, variant, message, title, onClose }: ToastProps) {
+export function Toast({ variant, message, title, onClose }: ToastProps) {
     const styles = variantStyles[variant];
     const Icon = styles.Icon;
 
@@ -36,27 +36,27 @@ export function Toast({ id: _id, variant, message, title, onClose }: ToastProps)
             className={`
                 flex min-w-[320px] max-w-[420px] items-start gap-3 rounded-xl border-2 p-4
                 animate-toast-in
-                ${styles.container}
+                ${styles.container} dark:border-white/10 dark:bg-[#182233] dark:shadow-[0_24px_50px_rgba(2,6,23,0.42)]
             `}
         >
             <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/90 ${styles.icon}`}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/90 dark:bg-[#0f1a29] ${styles.icon}`}
             >
                 <Icon className="h-5 w-5" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
                 {title && (
-                    <p className="text-sm font-semibold text-[#1E1E1E]">
+                    <p className="text-sm font-semibold text-[#1E1E1E] dark:text-slate-100">
                         {title}
                     </p>
                 )}
-                <p className="text-sm text-[#404040]">{message}</p>
+                <p className="text-sm text-[#404040] dark:text-slate-300">{message}</p>
             </div>
             <button
                 type="button"
                 onClick={onClose}
                 aria-label="Cerrar"
-                className="shrink-0 rounded-lg p-1.5 text-[#5B5B5B]/70 transition hover:bg-black/5 hover:text-[#1E1E1E]"
+                className="shrink-0 rounded-lg p-1.5 text-[#5B5B5B]/70 transition hover:bg-black/5 hover:text-[#1E1E1E] dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100"
             >
                 <X className="h-4 w-4" />
             </button>

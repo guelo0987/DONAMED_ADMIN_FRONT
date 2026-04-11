@@ -19,6 +19,9 @@ const estadoLabels: Record<EstadoUsuario, string> = {
     ELIMINADO: "Eliminado",
 };
 
+const usuariosTableGrid =
+    "grid-cols-[72px_minmax(250px,1.7fr)_160px_130px_180px_120px_120px]";
+
 function formatDateTime(dateStr: string | null): string {
     if (!dateStr) return "—";
     const d = new Date(dateStr);
@@ -101,13 +104,10 @@ export function ListaUsuarios() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-semibold text-[#1E1E1E]">Usuarios</h1>
-                    <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                        Gestión de usuarios del sistema según rol y estado.
-                    </p>
-                </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-2xl text-sm text-[#5B5B5B]/80">
+                    Gestión de usuarios del sistema según rol y estado.
+                </p>
                 <Button
                     asChild
                     className="h-10 gap-2 rounded-xl bg-donamed-primary text-white hover:bg-donamed-dark"
@@ -146,8 +146,8 @@ export function ListaUsuarios() {
                                     className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
                                 />
                             </button>
-                            <div className="flex items-center gap-2">
-                                <div className="group flex h-11 w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                                <div className="group flex h-11 w-full sm:w-[280px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
                                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-donamed-light text-donamed-dark transition group-focus-within:bg-donamed-primary group-focus-within:text-white">
                                         <Search className="h-4 w-4" />
                                     </div>
@@ -163,7 +163,7 @@ export function ListaUsuarios() {
                                 <Button
                                     type="button"
                                     onClick={handleSearch}
-                                    className="h-11 rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark"
+                                    className="h-11 w-full rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark sm:w-auto"
                                 >
                                     Buscar
                                 </Button>
@@ -216,73 +216,89 @@ export function ListaUsuarios() {
                         </div>
                     )}
 
-                    <div className="w-full">
-                        <div className="grid grid-cols-[0.6fr_1.4fr_1fr_1fr_1.2fr_0.9fr_0.8fr] gap-4 border-b border-[#EEF1F4] bg-white px-6 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
-                            <span>ID</span>
-                            <span>Correo</span>
-                            <span>Cédula</span>
-                            <span>Rol</span>
-                            <span>Último ingreso</span>
-                            <span>Estado</span>
-                            <span>Acciones</span>
-                        </div>
-
-                        {isLoading ? (
-                            <div className="py-16 text-center">
-                                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
-                                <p className="mt-3 text-sm text-[#5B5B5B]">Cargando usuarios...</p>
+                    <div className="overflow-x-auto px-4 py-2 sm:px-6">
+                        <div className="mx-auto min-w-[1032px]">
+                            <div
+                                className={`grid ${usuariosTableGrid} items-center gap-4 rounded-t-2xl border-b border-[#EEF1F4] bg-white px-5 py-4 text-xs font-semibold uppercase tracking-wide text-[#8B9096]`}
+                            >
+                                <span>ID</span>
+                                <span>Correo</span>
+                                <span>Cédula</span>
+                                <span>Rol</span>
+                                <span>Último ingreso</span>
+                                <span className="text-center">Estado</span>
+                                <span className="text-center">Acciones</span>
                             </div>
-                        ) : (
-                            <>
-                                {filteredUsuarios.map((usuario) => (
-                                    <div
-                                        key={usuario.idusuario}
-                                        className="grid grid-cols-[0.6fr_1.4fr_1fr_1fr_1.2fr_0.9fr_0.8fr] gap-4 border-b border-[#EEF1F4] px-6 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]"
-                                    >
-                                        <span className="font-medium">{usuario.idusuario}</span>
-                                        <span>{usuario.correo}</span>
-                                        <span>{usuario.cedula_usuario ?? "—"}</span>
-                                        <span>{usuario.rol?.nombre ?? "—"}</span>
-                                        <span>{formatDateTime(usuario.ultimo_ingreso)}</span>
-                                        <span
-                                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${usuario.estado ? statusStyles[usuario.estado] : "bg-gray-100 text-gray-600"}`}
-                                        >
-                                            {usuario.estado ? estadoLabels[usuario.estado] : "—"}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                            <Link
-                                                to={`/usuarios/${usuario.idusuario}`}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
-                                                title="Ver detalle"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
-                                            <Link
-                                                to={`/usuarios/${usuario.idusuario}/editar`}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
-                                                title="Editar"
-                                            >
-                                                <PencilLine className="h-4 w-4" />
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={() => setEliminarTarget(usuario)}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
 
-                                {filteredUsuarios.length === 0 && (
-                                    <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
-                                        No se encontraron usuarios
-                                    </div>
-                                )}
-                            </>
-                        )}
+                            {isLoading ? (
+                                <div className="py-16 text-center">
+                                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-donamed-light border-t-donamed-primary" />
+                                    <p className="mt-3 text-sm text-[#5B5B5B]">Cargando usuarios...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {filteredUsuarios.map((usuario) => (
+                                        <div
+                                            key={usuario.idusuario}
+                                            className={`grid ${usuariosTableGrid} items-center gap-4 border-b border-[#EEF1F4] px-5 py-4 text-sm text-[#2D3748] transition hover:bg-[#F9FBFC]`}
+                                        >
+                                            <span className="font-medium whitespace-nowrap">
+                                                {usuario.idusuario}
+                                            </span>
+                                            <span className="min-w-0 truncate" title={usuario.correo}>
+                                                {usuario.correo}
+                                            </span>
+                                            <span className="whitespace-nowrap">
+                                                {usuario.cedula_usuario ?? "—"}
+                                            </span>
+                                            <span className="min-w-0 truncate" title={usuario.rol?.nombre ?? "—"}>
+                                                {usuario.rol?.nombre ?? "—"}
+                                            </span>
+                                            <span className="text-xs leading-5 whitespace-nowrap">
+                                                {formatDateTime(usuario.ultimo_ingreso)}
+                                            </span>
+                                            <div className="flex justify-center">
+                                                <span
+                                                    className={`w-fit rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${usuario.estado ? statusStyles[usuario.estado] : "bg-gray-100 text-gray-600"}`}
+                                                >
+                                                    {usuario.estado ? estadoLabels[usuario.estado] : "—"}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Link
+                                                    to={`/usuarios/${usuario.idusuario}`}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                    title="Ver detalle"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    to={`/usuarios/${usuario.idusuario}/editar`}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-[#5B5B5B] transition hover:border-donamed-primary/40 hover:text-donamed-dark"
+                                                    title="Editar"
+                                                >
+                                                    <PencilLine className="h-4 w-4" />
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEliminarTarget(usuario)}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {filteredUsuarios.length === 0 && (
+                                        <div className="py-10 text-center text-sm text-[#5B5B5B]/60">
+                                            No se encontraron usuarios
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

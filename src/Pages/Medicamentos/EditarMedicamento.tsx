@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,13 @@ import type { FormaFarmaceutica, ViaAdministracion, Categoria, Enfermedad } from
 
 const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/gif,image/webp";
 const MAX_FILE_SIZE_MB = 5;
+
+function normalizeSearchText(value: string) {
+    return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
 
 export function EditarMedicamento() {
     const { addToast } = useToast();
@@ -30,6 +37,8 @@ export function EditarMedicamento() {
     const [viasAdministracion, setViasAdministracion] = useState<ViaAdministracion[]>([]);
     const [categoriasList, setCategoriasList] = useState<Categoria[]>([]);
     const [enfermedadesList, setEnfermedadesList] = useState<Enfermedad[]>([]);
+    const [categoriaSearch, setCategoriaSearch] = useState("");
+    const [enfermedadSearch, setEnfermedadSearch] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -139,6 +148,24 @@ export function EditarMedicamento() {
         );
     };
 
+    const filteredCategorias = useMemo(() => {
+        const normalizedQuery = normalizeSearchText(categoriaSearch.trim());
+        if (!normalizedQuery) return categoriasList;
+
+        return categoriasList.filter((categoria) =>
+            normalizeSearchText(categoria.nombre).includes(normalizedQuery)
+        );
+    }, [categoriaSearch, categoriasList]);
+
+    const filteredEnfermedades = useMemo(() => {
+        const normalizedQuery = normalizeSearchText(enfermedadSearch.trim());
+        if (!normalizedQuery) return enfermedadesList;
+
+        return enfermedadesList.filter((enfermedad) =>
+            normalizeSearchText(enfermedad.nombre).includes(normalizedQuery)
+        );
+    }, [enfermedadSearch, enfermedadesList]);
+
     if (isLoading && !nombre) {
         return (
             <div className="flex min-h-[400px] items-center justify-center">
@@ -219,7 +246,9 @@ export function EditarMedicamento() {
                                                 onClick={() => {
                                                     setFotoFile(null);
                                                     setFotoPreview(null);
-                                                    fileInputRef.current?.value && (fileInputRef.current.value = "");
+                                                    if (fileInputRef.current) {
+                                                        fileInputRef.current.value = "";
+                                                    }
                                                 }}
                                             >
                                                 Quitar selección
@@ -312,42 +341,80 @@ export function EditarMedicamento() {
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                     Categorías
                                 </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {categoriasList.map((c) => (
-                                        <label
-                                            key={c.idcategoria}
-                                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#E7E7E7] bg-white px-3 py-2 text-sm transition hover:bg-gray-50"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={categorias.includes(c.idcategoria)}
-                                                onChange={() => toggleCategoria(c.idcategoria)}
-                                                className="h-4 w-4 rounded"
-                                            />
-                                            {c.nombre}
-                                        </label>
-                                    ))}
+                                <input
+                                    type="text"
+                                    value={categoriaSearch}
+                                    onChange={(e) => setCategoriaSearch(e.target.value)}
+                                    placeholder="Buscar categoría por nombre, con o sin acento"
+                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                />
+                                <div className="rounded-xl border border-[#EEF1F4] bg-[#FBFBFC] p-3">
+                                    {filteredCategorias.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {filteredCategorias.map((c) => (
+                                                <label
+                                                    key={c.idcategoria}
+                                                    className={`flex min-h-[42px] max-w-full cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm leading-5 transition ${
+                                                        categorias.includes(c.idcategoria)
+                                                            ? "border-donamed-primary bg-donamed-light/60 text-donamed-dark"
+                                                            : "border-[#E7E7E7] bg-white hover:bg-gray-50"
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={categorias.includes(c.idcategoria)}
+                                                        onChange={() => toggleCategoria(c.idcategoria)}
+                                                        className="mt-0.5 h-4 w-4 shrink-0 rounded"
+                                                    />
+                                                    <span className="break-words">{c.nombre}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="rounded-lg border border-dashed border-[#E7E7E7] px-4 py-3 text-sm text-[#8B9096]">
+                                            No hay categorías que coincidan con esa búsqueda.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2 text-sm md:col-span-2">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                     Enfermedades
                                 </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {enfermedadesList.map((e) => (
-                                        <label
-                                            key={e.idenfermedad}
-                                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#E7E7E7] bg-white px-3 py-2 text-sm transition hover:bg-gray-50"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={enfermedades.includes(e.idenfermedad)}
-                                                onChange={() => toggleEnfermedad(e.idenfermedad)}
-                                                className="h-4 w-4 rounded"
-                                            />
-                                            {e.nombre}
-                                        </label>
-                                    ))}
+                                <input
+                                    type="text"
+                                    value={enfermedadSearch}
+                                    onChange={(e) => setEnfermedadSearch(e.target.value)}
+                                    placeholder="Buscar enfermedad por nombre, con o sin acento"
+                                    className="h-10 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                />
+                                <div className="rounded-xl border border-[#EEF1F4] bg-[#FBFBFC] p-3">
+                                    {filteredEnfermedades.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {filteredEnfermedades.map((e) => (
+                                                <label
+                                                    key={e.idenfermedad}
+                                                    className={`flex min-h-[42px] max-w-full cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm leading-5 transition ${
+                                                        enfermedades.includes(e.idenfermedad)
+                                                            ? "border-donamed-primary bg-donamed-light/60 text-donamed-dark"
+                                                            : "border-[#E7E7E7] bg-white hover:bg-gray-50"
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={enfermedades.includes(e.idenfermedad)}
+                                                        onChange={() => toggleEnfermedad(e.idenfermedad)}
+                                                        className="mt-0.5 h-4 w-4 shrink-0 rounded"
+                                                    />
+                                                    <span className="break-words">{e.nombre}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="rounded-lg border border-dashed border-[#E7E7E7] px-4 py-3 text-sm text-[#8B9096]">
+                                            No hay enfermedades que coincidan con esa búsqueda.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2 text-sm md:col-span-2">

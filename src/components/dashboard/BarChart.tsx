@@ -27,20 +27,20 @@ export function BarChart({
 
     return (
         <div className="flex h-full flex-col">
-            <h3 className="text-xl font-semibold text-[#404040]">{title}</h3>
+            <h3 className="text-xl font-semibold text-[#404040] dark:text-slate-100">{title}</h3>
 
-            <div className="mt-6 flex flex-1 items-end justify-around gap-4">
+            <div className="mt-6 flex flex-1 items-end justify-around gap-4 rounded-[20px] dark:border dark:border-white/6 dark:bg-white/[0.02] dark:px-4 dark:py-5">
                 {data.map((item, index) => (
                     <div key={index} className="flex flex-col items-center gap-1">
                         <div className="flex items-end gap-1">
                             <div
-                                className="w-3 rounded-sm bg-donamed-dark"
+                                className="w-3 rounded-sm bg-donamed-primary shadow-[0_12px_24px_rgba(52,164,179,0.18)] dark:bg-[#59d6e5] dark:shadow-[0_12px_24px_rgba(89,214,229,0.18)]"
                                 style={{
                                     height: `${Math.max((item.value1 / maxValue) * 120, 2)}px`,
                                 }}
                             />
                             <div
-                                className="w-3 rounded-sm bg-donamed-secondary"
+                                className="w-3 rounded-sm bg-donamed-secondary shadow-[0_12px_24px_rgba(64,201,219,0.18)] dark:bg-[#8ce9f3] dark:shadow-[0_12px_24px_rgba(140,233,243,0.18)]"
                                 style={{
                                     height: `${Math.max((item.value2 / maxValue) * 120, 2)}px`,
                                 }}
@@ -50,24 +50,24 @@ export function BarChart({
                 ))}
             </div>
 
-            <div className="my-4 h-px w-full bg-[#EDF2F6]" />
+            <div className="my-4 h-px w-full bg-[#EDF2F6] dark:bg-white/10" />
 
-            <div className="flex items-center justify-center gap-8">
-                <div className="flex flex-col items-center">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+                <div className="flex flex-col items-center rounded-full bg-[#F8FAFC] px-4 py-2 dark:bg-[#102033]">
                     <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded bg-donamed-dark" />
-                        <span className="text-base text-[#5B5B5B]">{legend1}</span>
+                        <div className="h-2 w-2 rounded bg-donamed-primary dark:bg-[#59d6e5]" />
+                        <span className="text-sm text-[#5B5B5B] dark:text-slate-300 sm:text-base">{legend1}</span>
                     </div>
-                    <span className="text-sm font-medium text-[#222B45]">
+                    <span className="text-sm font-medium text-[#222B45] dark:text-slate-100">
                         {legend1Value.toLocaleString()}
                     </span>
                 </div>
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center rounded-full bg-[#F8FAFC] px-4 py-2 dark:bg-[#102033]">
                     <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded bg-donamed-secondary" />
-                        <span className="text-base text-[#5B5B5B]">{legend2}</span>
+                        <div className="h-2 w-2 rounded bg-donamed-secondary dark:bg-[#8ce9f3]" />
+                        <span className="text-sm text-[#5B5B5B] dark:text-slate-300 sm:text-base">{legend2}</span>
                     </div>
-                    <span className="text-sm font-medium text-[#222B45]">
+                    <span className="text-sm font-medium text-[#222B45] dark:text-slate-100">
                         {legend2Value.toLocaleString()}
                     </span>
                 </div>

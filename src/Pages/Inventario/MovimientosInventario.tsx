@@ -179,7 +179,7 @@ export function MovimientosInventario() {
                                     )}
                                 </div>
                                 {showLoteDropdown && filteredLotes.length > 0 && (
-                                    <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[#E7E7E7] bg-white shadow-lg">
+                                    <div className="mt-2 max-h-56 w-full overflow-y-auto rounded-lg border border-[#E7E7E7] bg-white shadow-lg">
                                         {filteredLotes.slice(0, 30).map((l) => (
                                             <button
                                                 key={l.codigolote}
@@ -209,7 +209,7 @@ export function MovimientosInventario() {
                                     </div>
                                 )}
                                 {showLoteDropdown && loteSearch.trim() && filteredLotes.length === 0 && (
-                                    <div className="absolute z-20 mt-1 w-full rounded-lg border border-[#E7E7E7] bg-white px-4 py-3 text-sm text-[#5B5B5B]/60 shadow-lg">
+                                    <div className="mt-2 w-full rounded-lg border border-[#E7E7E7] bg-white px-4 py-3 text-sm text-[#5B5B5B]/60 shadow-lg">
                                         No se encontraron lotes
                                     </div>
                                 )}

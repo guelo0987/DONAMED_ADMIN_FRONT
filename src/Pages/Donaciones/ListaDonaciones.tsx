@@ -112,8 +112,8 @@ export function ListaDonaciones() {
                             <span>Registradas</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <div className="group flex h-11 w-[260px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                            <div className="group flex h-11 w-full sm:w-[260px] items-center gap-2 rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-sm transition hover:shadow-md focus-within:border-donamed-primary/40 focus-within:ring-4 focus-within:ring-donamed-light">
                                 <Search className="h-4 w-4 text-[#5B5B5B]" />
                                 <input
                                     type="text"
@@ -127,7 +127,7 @@ export function ListaDonaciones() {
                             <Button
                                 type="button"
                                 onClick={handleSearch}
-                                className="h-11 rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark"
+                                className="h-11 w-full rounded-xl bg-donamed-primary px-4 text-white hover:bg-donamed-dark sm:w-auto"
                             >
                                 Buscar
                             </Button>

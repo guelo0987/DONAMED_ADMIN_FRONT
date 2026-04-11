@@ -42,9 +42,9 @@ export function LineChart({ title, esteMes = 0, mesAnterior = 0 }: LineChartProp
 
     return (
         <div className="flex h-full flex-col">
-            <h3 className="text-xl font-semibold text-[#2D3748]">{title}</h3>
+            <h3 className="text-xl font-semibold text-[#2D3748] dark:text-slate-100">{title}</h3>
 
-            <div className="mt-4 flex-1">
+            <div className="mt-4 flex-1 rounded-[20px] dark:border dark:border-white/6 dark:bg-white/[0.02] dark:px-2 dark:py-3">
                 <svg viewBox={`0 0 ${w + 40} ${h}`} className="h-full w-full">
                     <defs>
                         <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -79,22 +79,22 @@ export function LineChart({ title, esteMes = 0, mesAnterior = 0 }: LineChartProp
             </div>
 
             {/* Legend */}
-            <div className="mt-4 flex items-center justify-center gap-8">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-2">
-                        <div className="h-1 w-4 rounded bg-donamed-primary" />
-                        <span className="text-base text-[#5F6368]">Este mes</span>
+                <div className="flex items-center gap-2">
+                    <div className="h-1 w-4 rounded bg-donamed-primary" />
+                        <span className="text-sm text-[#5F6368] dark:text-slate-300 sm:text-base">Este mes</span>
                     </div>
-                    <span className="text-sm font-medium text-[#2D3748]">
+                    <span className="text-sm font-medium text-[#2D3748] dark:text-slate-100">
                         {esteMes.toLocaleString()}
                     </span>
                 </div>
                 <div className="flex flex-col items-center">
                     <div className="flex items-center gap-2">
                         <div className="h-1 w-4 rounded bg-donamed-secondary" />
-                        <span className="text-base text-[#5F6368]">Mes anterior</span>
+                        <span className="text-sm text-[#5F6368] dark:text-slate-300 sm:text-base">Mes anterior</span>
                     </div>
-                    <span className="text-sm font-medium text-[#2D3748]">
+                    <span className="text-sm font-medium text-[#2D3748] dark:text-slate-100">
                         {mesAnterior.toLocaleString()}
                     </span>
                 </div>

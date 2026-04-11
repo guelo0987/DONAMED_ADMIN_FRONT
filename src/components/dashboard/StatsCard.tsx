@@ -21,20 +21,22 @@ export function StatsCard({
     return (
         <div
             className={cn(
-                "flex h-[184px] w-[180px] flex-col rounded-2xl p-5",
-                isPrimary ? "bg-donamed-secondary" : "bg-donamed-secondary/20"
+                "flex h-full min-h-[160px] w-full min-w-0 flex-col rounded-2xl p-5 transition-colors sm:min-h-[184px]",
+                isPrimary
+                    ? "bg-donamed-secondary shadow-[0_18px_40px_rgba(64,201,219,0.22)] dark:bg-[linear-gradient(180deg,#31b8c9_0%,#2093a5_100%)] dark:shadow-[0_22px_42px_rgba(18,148,165,0.26)]"
+                    : "bg-donamed-secondary/20 dark:border dark:border-cyan-400/10 dark:bg-[#122638]"
             )}
         >
             {/* Icon */}
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
-                <Icon className="h-6 w-6 text-donamed-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#0f1a29] dark:ring-1 dark:ring-white/10">
+                <Icon className="h-6 w-6 text-donamed-primary dark:text-[#89e5ef]" />
             </div>
 
             {/* Value */}
             <span
                 className={cn(
                     "mt-4 text-2xl font-semibold",
-                    isPrimary ? "font-bold text-white" : "text-[#404040]"
+                    isPrimary ? "font-bold text-white" : "text-[#404040] dark:text-slate-100"
                 )}
             >
                 {value}
@@ -43,8 +45,8 @@ export function StatsCard({
             {/* Label */}
             <span
                 className={cn(
-                    "text-base font-medium",
-                    isPrimary ? "font-semibold text-white" : "text-[#425166]"
+                    "text-sm font-medium sm:text-base",
+                    isPrimary ? "font-semibold text-white/95" : "text-[#425166] dark:text-slate-300"
                 )}
             >
                 {label}
@@ -55,7 +57,7 @@ export function StatsCard({
                 <span
                     className={cn(
                         "mt-1 text-xs font-medium",
-                        isPrimary ? "text-white" : "text-[#1C5961]"
+                        isPrimary ? "text-white/80" : "text-[#1C5961] dark:text-[#80dbe5]"
                     )}
                 >
                     {subLabel}

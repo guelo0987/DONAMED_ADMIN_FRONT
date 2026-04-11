@@ -58,26 +58,25 @@ export function Dashboard() {
     }
 
     return (
-        <div className="flex gap-6 animate-in fade-in-0 duration-700">
-            {/* Left Column */}
-            <div className="flex flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-6 animate-in fade-in-0 duration-700 xl:flex-row">
+            <div className="flex min-w-0 flex-1 flex-col gap-6">
                 {/* Solicitudes de hoy */}
-                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700">
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-left-4 duration-700">
+                    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Solicitudes de hoy</CardTitle>
-                            <p className="mt-1 text-base text-[#5B5B5B]/80">
+                            <p className="mt-1 text-base text-[#5B5B5B]/80 dark:text-slate-400">
                                 Resumen de Solicitudes
                             </p>
                         </div>
-                        <Button className="h-10 gap-2 rounded-lg bg-donamed-primary px-4 transition hover:shadow-md">
+                        <Button className="h-10 w-full gap-2 rounded-lg bg-donamed-primary px-4 transition hover:shadow-md dark:shadow-[0_18px_32px_rgba(52,164,179,0.2)] sm:w-auto">
                             <Download className="h-4 w-4" />
                             Exportar
                         </Button>
                     </CardHeader>
 
                     <CardContent>
-                        <div className="flex gap-5">
+                        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
                             <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
                                 <StatsCard
                                     icon={DollarSign}
@@ -118,17 +117,17 @@ export function Dashboard() {
                 </Card>
 
                 {/* Solicitudes Recientes */}
-                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-100">
+                <Card className="transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-100">
                     <CardHeader>
                         <CardTitle>Solicitudes Recientes</CardTitle>
                     </CardHeader>
-                    <CardContent className="px-0">
+                    <CardContent className="overflow-x-auto px-0">
                         <SolicitudesTable solicitudes={data.solicitudesRecientes} />
                     </CardContent>
                 </Card>
 
                 {/* Insights */}
-                <Card className="h-[348px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-200">
+                <Card className="min-h-[320px] transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-left-4 duration-700 delay-200 xl:h-[348px]">
                     <CardContent className="h-full p-6">
                         <AreaChart
                             title="Insights"
@@ -140,10 +139,8 @@ export function Dashboard() {
                 </Card>
             </div>
 
-            {/* Right Column */}
-            <div className="flex w-[420px] flex-col gap-6">
-                {/* Solicitudes vs Medicamentos */}
-                <Card className="h-[349px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-100">
+            <div className="flex w-full flex-col gap-6 xl:w-[420px]">
+                <Card className="min-h-[320px] transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-100 xl:h-[349px]">
                     <CardContent className="h-full p-6">
                         <BarChart
                             title="Solicitudes vs Medicamentos"
@@ -155,8 +152,7 @@ export function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Solicitudes Entrantes */}
-                <Card className="h-[351px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-200">
+                <Card className="min-h-[320px] transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-200 xl:h-[351px]">
                     <CardContent className="h-full p-6">
                         <LineChart
                             title="Solicitudes Entrantes"
@@ -166,8 +162,7 @@ export function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Solicitudes por Día */}
-                <Card className="h-[351px] transition hover:-translate-y-0.5 hover:shadow-lg animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-300">
+                <Card className="min-h-[320px] transition hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_34px_70px_rgba(2,6,23,0.52)] animate-in fade-in-0 slide-in-from-right-4 duration-700 delay-300 xl:h-[351px]">
                     <CardContent className="h-full p-6">
                         <WeeklyChart
                             title="Solicitudes por Día"

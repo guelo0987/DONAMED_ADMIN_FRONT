@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Sparkles } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { almacenService } from "@/services/almacenService";
 import { medicamentoService } from "@/services/medicamentoService";
 import {
     loteService,
-    sugerirCodigoLote,
     isValidLoteCodigo,
 } from "@/services/loteService";
 import type { Proveedor } from "@/types/proveedor.types";
@@ -40,7 +39,7 @@ export function RegistroDonacion() {
             id: "1",
             codigomedicamento: "",
             idalmacen: 0,
-            codigolote: sugerirCodigoLote(1),
+            codigolote: "",
             fechafabricacion: "",
             fechavencimiento: "",
             cantidad: 0,
@@ -56,14 +55,13 @@ export function RegistroDonacion() {
     }, []);
 
     const handleAddItem = () => {
-        const nextIndex = items.length + 1;
         setItems((prev) => [
             ...prev,
             {
                 id: `med-${Date.now()}`,
                 codigomedicamento: "",
                 idalmacen: almacenes[0]?.idalmacen ?? 0,
-                codigolote: sugerirCodigoLote(nextIndex),
+                codigolote: "",
                 fechafabricacion: "",
                 fechavencimiento: "",
                 cantidad: 0,
@@ -79,13 +77,6 @@ export function RegistroDonacion() {
         setItems((prev) =>
             prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
         );
-    };
-
-    const handleGenerarCodigoLote = (id: string) => {
-        const item = items.find((i) => i.id === id);
-        if (!item) return;
-        const idx = items.findIndex((i) => i.id === id) + 1;
-        handleItemChange(id, "codigolote", sugerirCodigoLote(idx));
     };
 
     const handleRemoveItem = (id: string) => {
@@ -159,9 +150,9 @@ export function RegistroDonacion() {
                 </button>
                 <h1 className="text-3xl font-semibold text-[#1E1E1E]">Registro de Donación</h1>
                 <p className="mt-1 text-sm text-[#5B5B5B]/80">
-                    Selecciona medicamento, crea un lote con fechas de fabricación y vencimiento, y
-                    asígnalo a un almacén. El código de lote debe seguir el formato LOT-YYYYMMDD-NNN
-                    (ej: LOT-20250211-001).
+                    Selecciona medicamento, escribe manualmente el código de lote con sus fechas de
+                    fabricación y vencimiento, y asígnalo a un almacén. El código debe seguir el
+                    formato LOT-YYYYMMDD-NNN (ej: LOT-20250211-001).
                 </p>
             </div>
 
@@ -218,7 +209,7 @@ export function RegistroDonacion() {
                                     Medicamentos donados
                                 </h2>
                                 <p className="text-sm text-[#5B5B5B]/70">
-                                    Primero selecciona el medicamento, luego crea el lote con el
+                                    Primero selecciona el medicamento, luego escribe el lote con su
                                     código y fechas. Cada ítem suma al inventario del almacén.
                                 </p>
                             </div>
@@ -234,63 +225,63 @@ export function RegistroDonacion() {
                         </div>
 
                         <div className="mt-5 overflow-x-auto">
-                            <div className="grid gap-3 text-xs font-semibold uppercase tracking-wide text-[#8B9096] min-w-[800px] grid-cols-[1.2fr_1fr_1.2fr_0.9fr_0.9fr_0.7fr_auto]">
-                                <span>Medicamento</span>
-                                <span>Almacén</span>
-                                <span>Código lote</span>
-                                <span>Fab. (YYYY-MM-DD)</span>
-                                <span>Venc. (YYYY-MM-DD)</span>
-                                <span>Cantidad</span>
-                                <span className="hidden sm:block">Acción</span>
-                            </div>
+                            <div className="mx-auto w-fit min-w-[800px]">
+                                <div className="grid min-w-[800px] grid-cols-[1.2fr_1fr_1.2fr_0.9fr_0.9fr_0.7fr_auto] gap-3 text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
+                                    <span>Medicamento</span>
+                                    <span>Almacén</span>
+                                    <span>Código lote</span>
+                                    <span>Fab. (YYYY-MM-DD)</span>
+                                    <span>Venc. (YYYY-MM-DD)</span>
+                                    <span>Cantidad</span>
+                                    <span className="hidden text-center sm:block">Acción</span>
+                                </div>
 
-                            {items.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="grid gap-2 sm:gap-4 min-w-[800px] grid-cols-[1.2fr_1fr_1.2fr_0.9fr_0.9fr_0.7fr_auto] sm:items-center mt-4"
-                                >
-                                    <div className="flex flex-col gap-1">
-                                        <select
-                                            value={item.codigomedicamento}
-                                            onChange={(e) =>
-                                                handleItemChange(
-                                                    item.id,
-                                                    "codigomedicamento",
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="h-11 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                        >
-                                            <option value="">Seleccionar medicamento</option>
-                                            {medicamentos.map((m) => (
-                                                <option key={m.codigomedicamento} value={m.codigomedicamento}>
-                                                    {m.nombre} ({m.codigomedicamento})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <select
-                                            value={item.idalmacen || ""}
-                                            onChange={(e) =>
-                                                handleItemChange(
-                                                    item.id,
-                                                    "idalmacen",
-                                                    Number(e.target.value) || 0
-                                                )
-                                            }
-                                            className="h-11 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                        >
-                                            <option value="">Seleccionar almacén</option>
-                                            {almacenes.map((a) => (
-                                                <option key={a.idalmacen} value={a.idalmacen}>
-                                                    {a.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex gap-1">
+                                {items.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="mt-4 grid min-w-[800px] grid-cols-[1.2fr_1fr_1.2fr_0.9fr_0.9fr_0.7fr_auto] gap-2 sm:items-center sm:gap-4"
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <select
+                                                value={item.codigomedicamento}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "codigomedicamento",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="h-11 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                            >
+                                                <option value="">Seleccionar medicamento</option>
+                                                {medicamentos.map((m) => (
+                                                    <option key={m.codigomedicamento} value={m.codigomedicamento}>
+                                                        {m.nombre} ({m.codigomedicamento})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <select
+                                                value={item.idalmacen || ""}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "idalmacen",
+                                                        Number(e.target.value) || 0
+                                                    )
+                                                }
+                                                className="h-11 rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                            >
+                                                <option value="">Seleccionar almacén</option>
+                                                {almacenes.map((a) => (
+                                                    <option key={a.idalmacen} value={a.idalmacen}>
+                                                        {a.nombre}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
                                             <input
                                                 type="text"
                                                 value={item.codigolote}
@@ -302,85 +293,77 @@ export function RegistroDonacion() {
                                                     )
                                                 }
                                                 placeholder="LOT-20250211-001"
-                                                className={`h-11 flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-donamed-light ${
+                                                className={`h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-donamed-light ${
                                                     item.codigolote && !isValidLoteCodigo(item.codigolote)
                                                         ? "border-danger"
                                                         : "border-[#E7E7E7] text-[#404040]"
                                                 }`}
                                                 title="Formato: LOT-YYYYMMDD-NNN"
                                             />
+                                            {item.codigolote && !isValidLoteCodigo(item.codigolote) && (
+                                                <span className="text-xs text-danger">
+                                                    Formato: LOT-YYYYMMDD-NNN
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <input
+                                                type="date"
+                                                value={item.fechafabricacion}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "fechafabricacion",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <input
+                                                type="date"
+                                                value={item.fechavencimiento}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "fechavencimiento",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={item.cantidad || ""}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "cantidad",
+                                                        parseInt(e.target.value, 10) || 0
+                                                    )
+                                                }
+                                                placeholder="0"
+                                                className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => handleGenerarCodigoLote(item.id)}
-                                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-donamed-primary hover:bg-donamed-light/20 transition"
-                                                title="Generar código"
+                                                onClick={() => handleRemoveItem(item.id)}
+                                                disabled={items.length === 1}
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                title="Quitar"
                                             >
-                                                <Sparkles className="h-4 w-4" />
+                                                <Trash2 className="h-4 w-4" />
                                             </button>
                                         </div>
-                                        {item.codigolote && !isValidLoteCodigo(item.codigolote) && (
-                                            <span className="text-xs text-danger">
-                                                Formato: LOT-YYYYMMDD-NNN
-                                            </span>
-                                        )}
                                     </div>
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="date"
-                                            value={item.fechafabricacion}
-                                            onChange={(e) =>
-                                                handleItemChange(
-                                                    item.id,
-                                                    "fechafabricacion",
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="date"
-                                            value={item.fechavencimiento}
-                                            onChange={(e) =>
-                                                handleItemChange(
-                                                    item.id,
-                                                    "fechavencimiento",
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={item.cantidad || ""}
-                                            onChange={(e) =>
-                                                handleItemChange(
-                                                    item.id,
-                                                    "cantidad",
-                                                    parseInt(e.target.value, 10) || 0
-                                                )
-                                            }
-                                            placeholder="0"
-                                            className="h-11 rounded-lg border border-[#E7E7E7] px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
-                                        />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveItem(item.id)}
-                                            disabled={items.length === 1}
-                                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E7E7] bg-white text-danger transition hover:border-danger/40 hover:bg-danger/5 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            title="Quitar"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

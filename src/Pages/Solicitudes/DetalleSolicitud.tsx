@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
-    FileText, Download, ExternalLink, Image as ImageIcon, File, Plus, Trash2,
+    FileText, Download, ExternalLink, Image as ImageIcon, File, Plus, Trash2, Search,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,6 +100,7 @@ function getFileIcon(doc: DocumentoSolicitud) {
 interface DetalleRow {
     key: number;
     inventarioKey: string; // "idalmacen-codigolote"
+    inventarioSearch: string;
     cantidad: number;
     dosis_indicada: string;
     tiempo_tratamiento: string;
@@ -130,6 +131,7 @@ export function DetalleSolicitud() {
     const [rowKeyCounter, setRowKeyCounter] = useState(0);
     const [isSavingDetalles, setIsSavingDetalles] = useState(false);
     const [isDeletingDetalles, setIsDeletingDetalles] = useState(false);
+    const [activeInventarioSearchRow, setActiveInventarioSearchRow] = useState<number | null>(null);
 
     const numSolicitud = id ? parseInt(id, 10) : NaN;
 
@@ -229,7 +231,7 @@ export function DetalleSolicitud() {
         setRowKeyCounter(nextKey);
         setDetalleRows((prev) => [
             ...prev,
-            { key: nextKey, inventarioKey: "", cantidad: 1, dosis_indicada: "", tiempo_tratamiento: "" },
+            { key: nextKey, inventarioKey: "", inventarioSearch: "", cantidad: 1, dosis_indicada: "", tiempo_tratamiento: "" },
         ]);
     };
 
@@ -251,6 +253,21 @@ export function DetalleSolicitud() {
             ? new Date(item.lote.fechavencimiento).toLocaleDateString("es-DO")
             : "";
         return `${medName} — Lote: ${loteCode}${venc ? ` (Vence: ${venc})` : ""} — ${almName} — Stock: ${item.cantidad}`;
+    };
+
+    const handleSelectInventario = (rowKey: number, item: InventarioItem) => {
+        setDetalleRows((prev) =>
+            prev.map((row) =>
+                row.key === rowKey
+                    ? {
+                        ...row,
+                        inventarioKey: `${item.idalmacen}|${item.codigolote}`,
+                        inventarioSearch: item.medicamento?.nombre ?? item.codigomedicamento,
+                    }
+                    : row
+            )
+        );
+        setActiveInventarioSearchRow(null);
     };
 
     const handleGuardarDetalles = async () => {
@@ -637,6 +654,17 @@ export function DetalleSolicitud() {
                                         const selectedInv = inventario.find(
                                             (i) => `${i.idalmacen}|${i.codigolote}` === row.inventarioKey
                                         );
+                                        const searchQuery = row.inventarioSearch.trim().toLowerCase();
+                                        const filteredInventario = inventario.filter((item) =>
+                                            getInventarioLabel(item).toLowerCase().includes(searchQuery)
+                                        );
+                                        const visibleInventario = selectedInv &&
+                                            !filteredInventario.some(
+                                                (item) => `${item.idalmacen}|${item.codigolote}` === row.inventarioKey
+                                            )
+                                            ? [selectedInv, ...filteredInventario]
+                                            : filteredInventario;
+                                        const dropdownInventario = visibleInventario.slice(0, 6);
                                         return (
                                             <div
                                                 key={row.key}
@@ -647,13 +675,57 @@ export function DetalleSolicitud() {
                                                         <label className="text-xs font-semibold uppercase tracking-wide text-[#8B9096]">
                                                             Medicamento (Lote / Almacén / Stock)
                                                         </label>
+                                                        <div className="relative mt-1">
+                                                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B9096]" />
+                                                            <input
+                                                                type="text"
+                                                                value={row.inventarioSearch}
+                                                                onChange={(e) => updateDetalleRow(row.key, "inventarioSearch", e.target.value)}
+                                                                onFocus={() => setActiveInventarioSearchRow(row.key)}
+                                                                onBlur={() => {
+                                                                    setTimeout(() => setActiveInventarioSearchRow(null), 120);
+                                                                }}
+                                                                placeholder="Buscar medicamento, lote o almacén..."
+                                                                className="h-10 w-full rounded-lg border border-[#E7E7E7] bg-white pl-9 pr-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                                            />
+                                                            {activeInventarioSearchRow === row.key && row.inventarioSearch.trim() !== "" && (
+                                                                <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-xl border border-[#E7E7E7] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:border-slate-700/80 dark:bg-[#182233]">
+                                                                    {dropdownInventario.length > 0 ? (
+                                                                        <div className="max-h-64 overflow-y-auto py-2">
+                                                                            {dropdownInventario.map((item) => (
+                                                                                <button
+                                                                                    key={`${item.idalmacen}-${item.codigolote}`}
+                                                                                    type="button"
+                                                                                    onMouseDown={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        handleSelectInventario(row.key, item);
+                                                                                    }}
+                                                                                    className="flex w-full flex-col items-start gap-1 px-3 py-2 text-left transition hover:bg-[#F7FBFC] dark:hover:bg-white/5"
+                                                                                >
+                                                                                    <span className="text-sm font-medium text-[#2D3748] dark:text-slate-100">
+                                                                                        {item.medicamento?.nombre ?? item.codigomedicamento}
+                                                                                    </span>
+                                                                                    <span className="text-xs text-[#7B8794] dark:text-slate-400">
+                                                                                        Lote {item.codigolote} · {item.almacen?.nombre ?? `Almacén #${item.idalmacen}`} · Stock {item.cantidad}
+                                                                                    </span>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="px-3 py-3 text-sm text-[#7B8794] dark:text-slate-400">
+                                                                            No hay coincidencias para esa búsqueda.
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <select
                                                             value={row.inventarioKey}
                                                             onChange={(e) => updateDetalleRow(row.key, "inventarioKey", e.target.value)}
-                                                            className="mt-1 h-10 w-full rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
+                                                            className="mt-2 h-10 w-full rounded-lg border border-[#E7E7E7] bg-white px-3 text-sm text-[#404040] focus:outline-none focus:ring-2 focus:ring-donamed-light"
                                                         >
                                                             <option value="">Seleccionar del inventario...</option>
-                                                            {inventario.map((item) => (
+                                                            {visibleInventario.map((item) => (
                                                                 <option
                                                                     key={`${item.idalmacen}-${item.codigolote}`}
                                                                     value={`${item.idalmacen}|${item.codigolote}`}
@@ -661,7 +733,15 @@ export function DetalleSolicitud() {
                                                                     {getInventarioLabel(item)}
                                                                 </option>
                                                             ))}
+                                                            {visibleInventario.length === 0 && (
+                                                                <option value="" disabled>
+                                                                    No hay coincidencias para esa búsqueda
+                                                                </option>
+                                                            )}
                                                         </select>
+                                                        <p className="mt-1 text-xs text-[#8B9096]">
+                                                            {visibleInventario.length} resultado{visibleInventario.length === 1 ? "" : "s"} disponibles
+                                                        </p>
                                                     </div>
                                                     <button
                                                         type="button"

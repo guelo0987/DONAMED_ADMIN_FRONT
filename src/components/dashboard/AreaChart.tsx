@@ -46,18 +46,18 @@ export function AreaChart({ title, donaciones = [], usuarios = [], solicitudes =
 
     return (
         <div className="flex h-full flex-col">
-            <h3 className="text-xl font-semibold text-[#2D3748]">{title}</h3>
+            <h3 className="text-xl font-semibold text-[#2D3748] dark:text-slate-100">{title}</h3>
 
-            <div className="relative mt-4 flex-1">
+            <div className="relative mt-4 flex-1 rounded-[20px] dark:border dark:border-white/6 dark:bg-white/[0.02] dark:px-3 dark:py-4">
                 {/* Y-axis labels */}
-                <div className="absolute -left-2 top-0 flex h-[164px] flex-col-reverse justify-between text-right text-xs text-[#7B91B0]/70">
+                <div className="absolute -left-2 top-0 flex h-[164px] flex-col-reverse justify-between text-right text-[10px] text-[#7B91B0]/70 dark:text-slate-500 sm:text-xs">
                     {yLabels.map((label) => (
                         <span key={label}>{label}</span>
                     ))}
                 </div>
 
-                <div className="ml-8">
-                    <svg viewBox={`0 0 ${chartW} ${chartH + paddingBottom}`} className="h-[180px] w-full">
+                <div className="ml-6 sm:ml-8">
+                    <svg viewBox={`0 0 ${chartW} ${chartH + paddingBottom}`} className="h-[170px] w-full text-[#E9EFF5] dark:text-white/10 sm:h-[180px]">
                         {/* Grid lines */}
                         {Array.from({ length: ySteps + 1 }).map((_, i) => (
                             <line
@@ -66,7 +66,7 @@ export function AreaChart({ title, donaciones = [], usuarios = [], solicitudes =
                                 y1={i * (chartH / ySteps)}
                                 x2={chartW}
                                 y2={i * (chartH / ySteps)}
-                                stroke="rgba(70, 78, 95, 0.04)"
+                                stroke="currentColor"
                             />
                         ))}
 
@@ -87,7 +87,7 @@ export function AreaChart({ title, donaciones = [], usuarios = [], solicitudes =
                     </svg>
 
                     {/* X-axis labels */}
-                    <div className="mt-2 flex justify-between text-[10px] text-[#464E5F]">
+                    <div className="mt-2 flex justify-between text-[10px] text-[#464E5F] dark:text-slate-400">
                         {months.map((month) => (
                             <span key={month}>{month}</span>
                         ))}
@@ -96,18 +96,18 @@ export function AreaChart({ title, donaciones = [], usuarios = [], solicitudes =
             </div>
 
             {/* Legend */}
-            <div className="mt-6 flex items-center justify-center gap-8">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
                 <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-sm bg-donamed-primary" />
-                    <span className="text-xs font-medium text-[#464E5F]">Donaciones</span>
+                    <span className="text-xs font-medium text-[#464E5F] dark:text-slate-300">Donaciones</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-sm bg-[#9D9D9D]" />
-                    <span className="text-xs font-medium text-[#464E5F]">Usuarios</span>
+                    <span className="text-xs font-medium text-[#464E5F] dark:text-slate-300">Usuarios</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-sm bg-donamed-secondary" />
-                    <span className="text-xs font-medium text-[#464E5F]">Solicitudes</span>
+                    <span className="text-xs font-medium text-[#464E5F] dark:text-slate-300">Solicitudes</span>
                 </div>
             </div>
         </div>
