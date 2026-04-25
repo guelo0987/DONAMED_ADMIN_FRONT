@@ -38,6 +38,8 @@ export interface UsuariosQuery {
     page?: number;
     limit?: number;
     search?: string;
+    /** Filtro exacto por cédula (si el backend lo soporta). */
+    cedula?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usuarioService } from "@/services/usuarioService";
+import { parseCedulaOrTextSearch } from "@/lib/cedulaSearch";
 import { useToast } from "@/contexts/ToastContext";
 import type { Usuario, EstadoUsuario } from "@/types/usuario.types";
 
@@ -51,13 +52,33 @@ export function ListaUsuarios() {
         setIsLoading(true);
         setError(null);
         try {
+            const parsed = parseCedulaOrTextSearch(searchQuery);
             const result = await usuarioService.getUsuarios({
                 page,
                 limit: 20,
-                search: searchQuery || undefined,
+                ...(parsed.kind === "cedula"
+                    ? { cedula: parsed.digits, search: parsed.digits }
+                    : { search: parsed.text || undefined }),
             });
-            setUsuarios(result.data);
-            setPagination(result.pagination);
+            let rows = result.data;
+            if (parsed.kind === "cedula") {
+                rows = result.data.filter((u) => {
+                    const uc = (u.cedula_usuario ?? "").replace(/\D/g, "");
+                    const pc = (u.persona?.cedula ?? "").replace(/\D/g, "");
+                    return uc === parsed.digits || pc === parsed.digits;
+                });
+            }
+            setUsuarios(rows);
+            if (parsed.kind === "cedula") {
+                setPagination({
+                    ...result.pagination,
+                    total: rows.length,
+                    page: 1,
+                    totalPages: rows.length > 0 ? 1 : 0,
+                });
+            } else {
+                setPagination(result.pagination);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al cargar usuarios");
             setUsuarios([]);

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Download, DollarSign, FileText, CheckCircle, UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { downloadCsv } from "@/lib/exportCsv";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     StatsCard,
@@ -10,12 +11,52 @@ import {
     AreaChart,
     WeeklyChart,
 } from "@/components/dashboard";
-import { dashboardService, type DashboardData } from "@/services/dashboardService";
+import {
+    dashboardService,
+    type DashboardData,
+    type SolicitudReciente,
+} from "@/services/dashboardService";
 
 function formatVariacion(variacion: number): string {
     if (variacion === 0) return "Sin cambios";
     const sign = variacion > 0 ? "+" : "";
     return `${sign}${variacion}% vs ayer`;
+}
+
+const ESTADO_CSV_LABELS: Record<string, string> = {
+    PENDIENTE: "Pendiente",
+    EN_REVISION: "En revisión",
+    APROBADA: "Aprobada",
+    RECHAZADA: "Rechazada",
+    DESPACHADA: "Despachada",
+    ENTREGADA: "Entregada",
+    INCOMPLETA: "Incompleta",
+    CANCELADA: "Cancelada",
+};
+
+function formatFechaCsv(iso: string): string {
+    try {
+        return new Date(iso).toLocaleDateString("es-DO", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    } catch {
+        return iso;
+    }
+}
+
+function exportSolicitudesRecientesCsv(solicitudes: SolicitudReciente[]): void {
+    const day = new Date().toISOString().slice(0, 10);
+    const headers = ["#", "Número de solicitud", "Fecha", "Solicitante", "Estado"];
+    const rows = solicitudes.map((s) => [
+        String(s.numero),
+        s.numeroSolicitud,
+        formatFechaCsv(s.fecha),
+        s.nombreSolicitante,
+        ESTADO_CSV_LABELS[s.estado] ?? s.estado,
+    ]);
+    downloadCsv(`solicitudes-recientes-${day}.csv`, headers, rows);
 }
 
 export function Dashboard() {
@@ -39,6 +80,11 @@ export function Dashboard() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    const handleExportCsv = useCallback(() => {
+        if (!data?.solicitudesRecientes?.length) return;
+        exportSolicitudesRecientesCsv(data.solicitudesRecientes);
+    }, [data]);
 
     if (isLoading) {
         return (
@@ -69,7 +115,17 @@ export function Dashboard() {
                                 Resumen de Solicitudes
                             </p>
                         </div>
-                        <Button className="h-10 w-full gap-2 rounded-lg bg-donamed-primary px-4 transition hover:shadow-md dark:shadow-[0_18px_32px_rgba(52,164,179,0.2)] sm:w-auto">
+                        <Button
+                            type="button"
+                            onClick={handleExportCsv}
+                            disabled={!data.solicitudesRecientes?.length}
+                            title={
+                                data.solicitudesRecientes?.length
+                                    ? "Descargar solicitudes recientes en CSV"
+                                    : "No hay solicitudes para exportar"
+                            }
+                            className="h-10 w-full gap-2 rounded-lg bg-donamed-primary px-4 transition hover:shadow-md disabled:opacity-50 dark:shadow-[0_18px_32px_rgba(52,164,179,0.2)] sm:w-auto"
+                        >
                             <Download className="h-4 w-4" />
                             Exportar
                         </Button>

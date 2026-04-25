@@ -29,6 +29,7 @@ export const usuarioService = {
             if (query?.page) params.set("page", String(query.page));
             if (query?.limit) params.set("limit", String(query.limit));
             if (query?.search) params.set("search", query.search);
+            if (query?.cedula) params.set("cedula", query.cedula);
 
             const { data } = await apiClient.get<
                 ApiResponse<Usuario[]> & { pagination: PaginatedResponse<Usuario>["pagination"] }

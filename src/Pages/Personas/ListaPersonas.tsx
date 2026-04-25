@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { personaService } from "@/services/personaService";
+import { parseCedulaOrTextSearch } from "@/lib/cedulaSearch";
 import type { Persona } from "@/types/persona.types";
 
 function formatDate(dateStr: string | null): string {
@@ -29,13 +30,35 @@ export function ListaPersonas() {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await personaService.getPersonas({
-                page,
-                limit: 20,
-                search: searchQuery || undefined,
-            });
-            setPersonas(result.data);
-            setPagination(result.pagination);
+            const parsed = parseCedulaOrTextSearch(searchQuery);
+            if (parsed.kind === "cedula") {
+                try {
+                    const p = await personaService.getPersonaByCedula(parsed.digits);
+                    setPersonas([p]);
+                    setPagination({ total: 1, page: 1, limit: 20, totalPages: 1 });
+                } catch {
+                    try {
+                        const result = await personaService.getPersonas({
+                            page: 1,
+                            limit: 20,
+                            cedula: parsed.digits,
+                        });
+                        setPersonas(result.data);
+                        setPagination(result.pagination);
+                    } catch {
+                        setPersonas([]);
+                        setPagination({ total: 0, page: 1, limit: 20, totalPages: 0 });
+                    }
+                }
+            } else {
+                const result = await personaService.getPersonas({
+                    page,
+                    limit: 20,
+                    search: parsed.text || undefined,
+                });
+                setPersonas(result.data);
+                setPagination(result.pagination);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al cargar personas");
             setPersonas([]);
